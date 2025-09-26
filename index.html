@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elegance - Moda Feminina</title>
+    <link rel="stylesheet" href="cssmamis.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">ELEG<span>ANCE</span></a>
+            
+            <button class="hamburger">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#">Novidades</a></li>
+                    <li><a href="#">Vestidos</a></li>
+                    <li><a href="#">Blusas</a></li>
+                    <li><a href="#">Calças</a></li>
+                    <li><a href="#">Saias</a></li>
+                    <li><a href="#">Acessórios</a></li>
+                    <li><a href="#">Promoções</a></li>
+                </ul>
+            </nav>
+            
+            <div class="header-actions">
+                <button class="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="user-btn">
+                    <i class="fas fa-user"></i>
+                </button>
+                <button class="cart-btn" id="cartToggle">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Banner / Carousel -->
+    <section class="hero">
+        <div class="carousel">
+            <div class="carousel-slides">
+                <div class="carousel-slide" style="background-image: url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
+                    <div class="slide-content">
+                        <h2>Nova Coleção Verão</h2>
+                        <p>Descubra as últimas tendências da temporada</p>
+                        <a href="#" class="btn">Comprar Agora</a>
+                    </div>
+                </div>
+                <div class="carousel-slide" style="background-image: url('https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
+                    <div class="slide-content">
+                        <h2>Até 50% Off</h2>
+                        <p>Aproveite nossos descontos especiais</p>
+                        <a href="#" class="btn">Ver Ofertas</a>
+                    </div>
+                </div>
+                <div class="carousel-slide" style="background-image: url('https://images.unsplash.com/photo-1558769132-cb1aea458c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
+                    <div class="slide-content">
+                        <h2>Moda Sustentável</h2>
+                        <p>Conheça nossa linha eco-friendly</p>
+                        <a href="#" class="btn">Saiba Mais</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-controls">
+                <span class="carousel-dot active" data-slide="0"></span>
+                <span class="carousel-dot" data-slide="1"></span>
+                <span class="carousel-dot" data-slide="2"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters">
+        <div class="container filter-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar produtos...">
+            </div>
+            <div class="filter-options">
+                <select class="filter-select" id="categoryFilter">
+                    <option value="all">Todas as Categorias</option>
+                    <option value="vestidos">Vestidos</option>
+                    <option value="blusas">Blusas</option>
+                    <option value="calcas">Calças</option>
+                    <option value="saias">Saias</option>
+                    <option value="acessorios">Acessórios</option>
+                </select>
+                <select class="filter-select" id="priceFilter">
+                    <option value="all">Todos os Preços</option>
+                    <option value="0-50">Até R$ 50</option>
+                    <option value="50-100">R$ 50 - R$ 100</option>
+                    <option value="100-200">R$ 100 - R$ 200</option>
+                    <option value="200+">Acima de R$ 200</option>
+                </select>
+                <select class="filter-select" id="sortBy">
+                    <option value="default">Ordenar por</option>
+                    <option value="price-asc">Preço: Menor para Maior</option>
+                    <option value="price-desc">Preço: Maior para Menor</option>
+                    <option value="name">Nome A-Z</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Grid -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Nossos Produtos</h2>
+            <div class="products-grid" id="productsGrid">
+                <!-- Produtos serão inseridos via JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Carousel -->
+    <section class="section" style="background-color: var(--light-color);">
+        <div class="container">
+            <h2 class="section-title">Destaques da Semana</h2>
+            <div class="featured-carousel">
+                <div class="featured-slides">
+                    <!-- Slides serão inseridos via JavaScript -->
+                </div>
+                <div class="featured-controls">
+                    <button class="carousel-btn prev-featured">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="carousel-btn next-featured">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Modal -->
+    <div class="overlay" id="overlay"></div>
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-header">
+            <h3>Seu Carrinho</h3>
+            <button class="close-cart" id="closeCart">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Itens do carrinho serão inseridos via JavaScript -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">R$ 0,00</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">Finalizar Pedido</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Elegance</h3>
+                    <p>Moda feminina com elegância e sofisticação. Oferecemos as últimas tendências para mulheres modernas.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-pinterest"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Links Rápidos</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Sobre Nós</a></li>
+                        <li><a href="#">Nossa História</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Lojas</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Categorias</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Vestidos</a></li>
+                        <li><a href="#">Blusas</a></li>
+                        <li><a href="#">Calças</a></li>
+                        <li><a href="#">Saias</a></li>
+                        <li><a href="#">Acessórios</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Newsletter</h3>
+                    <p>Inscreva-se para receber nossas novidades e promoções.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Seu e-mail">
+                        <button type="submit">Inscrever</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 Elegance. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/scriptmamis.js”> 
+	
+	</script>
+</body>
+</html>
