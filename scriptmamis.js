@@ -107,22 +107,54 @@ let userState = '';
 document.addEventListener('DOMContentLoaded', function() {
     console.log("=== ELEGANCE - SISTEMA INICIADO ===");
     
-    // 1. Primeiro: Renderiza os produtos IMEDIATAMENTE
-    renderProducts();
-    
-    // 2. Configura validações
-    setupRealTimeValidation();
-    
-    // 3. Carrega dados salvos
+    // Carrega dados salvos primeiro
     loadSavedData();
     
-    // 4. Configura event listeners
-    setupEventListeners();
+    // Renderiza produtos IMEDIATAMENTE
+    renderProducts();
+    
+    // Configura validações
+    setupRealTimeValidation();
+    
+    // Configura todos os event listeners
+    setupAllEventListeners();
     
     console.log("✅ Sistema totalmente carregado e funcionando!");
 });
 
-// ===== FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO DE PRODUTOS =====
+// ===== CARREGAMENTO DE DADOS SALVOS =====
+function loadSavedData() {
+    // Carrega usuário
+    const savedUser = localStorage.getItem('eleganceUser');
+    if (savedUser) {
+        user = JSON.parse(savedUser);
+        console.log("👤 Usuário carregado:", user.name);
+    } else {
+        console.log("📝 Nenhum usuário encontrado, modal será aberto");
+        // Modal será aberto após timeout
+    }
+    
+    // Carrega carrinho
+    const savedCart = localStorage.getItem('eleganceCart');
+    if (savedCart) {
+        cart = JSON.parse(savedCart);
+        console.log("🛒 Carrinho carregado com", cart.length, "itens");
+        updateCart();
+    }
+    
+    // Abre modal de cadastro se não houver usuário (após um delay)
+    if (!user) {
+        setTimeout(() => {
+            const registerModal = document.getElementById('registerModal');
+            if (registerModal) {
+                registerModal.classList.add('active');
+                console.log("📝 Modal de cadastro aberto");
+            }
+        }, 1000);
+    }
+}
+
+// ===== RENDERIZAÇÃO DE PRODUTOS =====
 function renderProducts() {
     console.log("🔄 Renderizando produtos...");
     
@@ -167,22 +199,154 @@ function renderProducts() {
     });
     
     console.log(`✅ ${products.length} produtos renderizados com sucesso!`);
-    
-    // Configura os botões de adicionar ao carrinho
-    setupAddToCartButtons();
 }
 
-function setupAddToCartButtons() {
-    const buttons = document.querySelectorAll('.add-to-cart');
-    console.log(`🔘 Configurando ${buttons.length} botões de carrinho...`);
+// ===== VALIDAÇÕES EM TEMPO REAL =====
+function setupRealTimeValidation() {
+    const cepInput = document.getElementById('cep');
+    const phoneInput = document.getElementById('phone');
     
-    buttons.forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = parseInt(this.getAttribute('data-id'));
-            console.log(`🛒 Clicou no produto ID: ${productId}`);
-            addToCart(productId);
+    if (cepInput) {
+        cepInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 5) {
+                value = value.substring(0, 5) + '-' + value.substring(5, 8);
+            }
+            e.target.value = value;
+            if (value.length === 9) {
+                validateCEP(value);
+            }
         });
-    });
+    }
+    
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.length <= 2) {
+                    value = '(' + value;
+                } else if (value.length <= 7) {
+                    value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
+                } else {
+                    value = '(' + value.substring(0, 2) + ') ' + value.substring(2, 7) + '-' + value.substring(7, 11);
+                }
+            }
+            e.target.value = value;
+        });
+    }
+}
+
+// ===== VALIDAÇÃO DE CEP E FRETE =====
+async function validateCEP(cep) {
+    const cepClean = cep.replace(/\D/g, '');
+    
+    if (cepClean.length !== 8) {
+        showInputError('cep', 'CEP deve ter 8 dígitos');
+        return false;
+    }
+    
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
+        const data = await response.json();
+        
+        if (data.erro) {
+            showInputError('cep', 'CEP não encontrado');
+            return false;
+        }
+        
+        clearInputError('cep');
+        calculateShipping(data.uf);
+        userState = data.uf;
+        
+        console.log(`📍 Localização detectada: ${data.localidade}/${data.uf}`);
+        return true;
+        
+    } catch (error) {
+        showInputError('cep', 'Erro ao consultar CEP');
+        return false;
+    }
+}
+
+function calculateShipping(state) {
+    const stateRegion = getRegionByState(state);
+    shippingCost = storeConfig.freightRates[stateRegion] || storeConfig.freightRates.sudeste;
+    
+    console.log(`🚚 Frete calculado para ${state}: R$ ${shippingCost.toFixed(2)}`);
+    
+    if (cart.length > 0) {
+        updateCart();
+    }
+}
+
+function getRegionByState(state) {
+    const regions = {
+        'SP': 'sp', 'RJ': 'sudeste', 'MG': 'sudeste', 'ES': 'sudeste',
+        'RS': 'sul', 'SC': 'sul', 'PR': 'sul',
+        'DF': 'centro', 'GO': 'centro', 'MT': 'centro', 'MS': 'centro',
+        'BA': 'nordeste', 'SE': 'nordeste', 'AL': 'nordeste', 'PE': 'nordeste',
+        'PB': 'nordeste', 'RN': 'nordeste', 'CE': 'nordeste', 'PI': 'nordeste',
+        'MA': 'nordeste', 'AM': 'norte', 'RR': 'norte', 'AP': 'norte',
+        'PA': 'norte', 'TO': 'norte', 'RO': 'norte', 'AC': 'norte'
+    };
+    
+    return regions[state] || 'sudeste';
+}
+
+function showInputError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    
+    const formGroup = field.closest('.form-group');
+    clearInputError(fieldId);
+    
+    field.style.borderColor = '#e74c3c';
+    const errorElement = document.createElement('span');
+    errorElement.className = 'error-message';
+    errorElement.style.cssText = 'color: #e74c3c; font-size: 0.8rem; margin-top: 5px; display: block;';
+    errorElement.textContent = message;
+    formGroup.appendChild(errorElement);
+}
+
+function clearInputError(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    
+    const formGroup = field.closest('.form-group');
+    const errorElement = formGroup.querySelector('.error-message');
+    field.style.borderColor = '';
+    if (errorElement) errorElement.remove();
+}
+
+function validateForm() {
+    const name = document.getElementById('name')?.value.trim() || '';
+    const email = document.getElementById('email')?.value.trim() || '';
+    const cep = document.getElementById('cep')?.value.replace(/\D/g, '') || '';
+    const phone = document.getElementById('phone')?.value.replace(/\D/g, '') || '';
+    
+    let isValid = true;
+    
+    if (name.length < 3) {
+        showInputError('name', 'Nome deve ter pelo menos 3 caracteres');
+        isValid = false;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showInputError('email', 'E-mail inválido');
+        isValid = false;
+    }
+    
+    if (cep.length !== 8) {
+        showInputError('cep', 'CEP deve ter 8 dígitos');
+        isValid = false;
+    }
+    
+    if (phone.length < 10 || phone.length > 11) {
+        showInputError('phone', 'Telefone deve ter 10 ou 11 dígitos');
+        isValid = false;
+    }
+    
+    return isValid;
 }
 
 // ===== SISTEMA DE CARRINHO =====
@@ -192,7 +356,7 @@ function addToCart(productId) {
     if (!user) {
         console.log("⚠️ Usuário não cadastrado, abrindo modal...");
         alert('Por favor, faça seu cadastro antes de adicionar produtos ao carrinho.');
-        document.getElementById('registerModal').classList.add('active');
+        openRegisterModal();
         return;
     }
     
@@ -386,233 +550,35 @@ function removeFromCart(productId) {
     showNotification('🗑️ ' + productName + ' removido do carrinho');
 }
 
-// ===== VALIDAÇÕES E FRETE =====
-function setupRealTimeValidation() {
-    const cepInput = document.getElementById('cep');
-    const phoneInput = document.getElementById('phone');
-    
-    if (cepInput) {
-        cepInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 5) {
-                value = value.substring(0, 5) + '-' + value.substring(5, 8);
-            }
-            e.target.value = value;
-            if (value.length === 9) {
-                validateCEP(value);
-            }
-        });
-    }
-    
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 0) {
-                if (value.length <= 2) {
-                    value = '(' + value;
-                } else if (value.length <= 7) {
-                    value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
-                } else {
-                    value = '(' + value.substring(0, 2) + ') ' + value.substring(2, 7) + '-' + value.substring(7, 11);
-                }
-            }
-            e.target.value = value;
-        });
-    }
-}
-
-async function validateCEP(cep) {
-    const cepClean = cep.replace(/\D/g, '');
-    
-    if (cepClean.length !== 8) {
-        showInputError('cep', 'CEP deve ter 8 dígitos');
-        return false;
-    }
-    
-    try {
-        const response = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
-        const data = await response.json();
-        
-        if (data.erro) {
-            showInputError('cep', 'CEP não encontrado');
-            return false;
-        }
-        
-        clearInputError('cep');
-        calculateShipping(data.uf);
-        userState = data.uf;
-        
-        console.log(`📍 Localização detectada: ${data.localidade}/${data.uf}`);
-        return true;
-        
-    } catch (error) {
-        showInputError('cep', 'Erro ao consultar CEP');
-        return false;
-    }
-}
-
-function calculateShipping(state) {
-    const stateRegion = getRegionByState(state);
-    shippingCost = storeConfig.freightRates[stateRegion] || storeConfig.freightRates.sudeste;
-    
-    console.log(`🚚 Frete calculado para ${state}: R$ ${shippingCost.toFixed(2)}`);
-    
-    if (cart.length > 0) {
-        updateCart();
-    }
-}
-
-function getRegionByState(state) {
-    const regions = {
-        'SP': 'sp', 'RJ': 'sudeste', 'MG': 'sudeste', 'ES': 'sudeste',
-        'RS': 'sul', 'SC': 'sul', 'PR': 'sul',
-        'DF': 'centro', 'GO': 'centro', 'MT': 'centro', 'MS': 'centro',
-        'BA': 'nordeste', 'SE': 'nordeste', 'AL': 'nordeste', 'PE': 'nordeste',
-        'PB': 'nordeste', 'RN': 'nordeste', 'CE': 'nordeste', 'PI': 'nordeste',
-        'MA': 'nordeste', 'AM': 'norte', 'RR': 'norte', 'AP': 'norte',
-        'PA': 'norte', 'TO': 'norte', 'RO': 'norte', 'AC': 'norte'
-    };
-    
-    return regions[state] || 'sudeste';
-}
-
-function showInputError(fieldId, message) {
-    const field = document.getElementById(fieldId);
-    if (!field) return;
-    
-    const formGroup = field.closest('.form-group');
-    clearInputError(fieldId);
-    
-    field.style.borderColor = '#e74c3c';
-    const errorElement = document.createElement('span');
-    errorElement.className = 'error-message';
-    errorElement.style.cssText = 'color: #e74c3c; font-size: 0.8rem; margin-top: 5px; display: block;';
-    errorElement.textContent = message;
-    formGroup.appendChild(errorElement);
-}
-
-function clearInputError(fieldId) {
-    const field = document.getElementById(fieldId);
-    if (!field) return;
-    
-    const formGroup = field.closest('.form-group');
-    const errorElement = formGroup.querySelector('.error-message');
-    field.style.borderColor = '';
-    if (errorElement) errorElement.remove();
-}
-
-function validateForm() {
-    const name = document.getElementById('name')?.value.trim() || '';
-    const email = document.getElementById('email')?.value.trim() || '';
-    const cep = document.getElementById('cep')?.value.replace(/\D/g, '') || '';
-    const phone = document.getElementById('phone')?.value.replace(/\D/g, '') || '';
-    
-    let isValid = true;
-    
-    if (name.length < 3) {
-        showInputError('name', 'Nome deve ter pelo menos 3 caracteres');
-        isValid = false;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showInputError('email', 'E-mail inválido');
-        isValid = false;
-    }
-    
-    if (cep.length !== 8) {
-        showInputError('cep', 'CEP deve ter 8 dígitos');
-        isValid = false;
-    }
-    
-    if (phone.length < 10 || phone.length > 11) {
-        showInputError('phone', 'Telefone deve ter 10 ou 11 dígitos');
-        isValid = false;
-    }
-    
-    return isValid;
-}
-
-// ===== CARREGAMENTO DE DADOS SALVOS =====
-function loadSavedData() {
-    // Carrega usuário
-    const savedUser = localStorage.getItem('eleganceUser');
-    if (savedUser) {
-        user = JSON.parse(savedUser);
-        console.log("👤 Usuário carregado:", user.name);
-    } else {
-        setTimeout(() => {
-            const registerModal = document.getElementById('registerModal');
-            if (registerModal) {
-                registerModal.classList.add('active');
-                console.log("📝 Modal de cadastro aberto");
-            }
-        }, 1000);
-    }
-    
-    // Carrega carrinho
-    const savedCart = localStorage.getItem('eleganceCart');
-    if (savedCart) {
-        cart = JSON.parse(savedCart);
-        console.log("🛒 Carrinho carregado com", cart.length, "itens");
-        updateCart();
-    }
-}
-
 // ===== SISTEMA DE EVENTOS =====
-function setupEventListeners() {
-    console.log("🔗 Configurando event listeners...");
+function setupAllEventListeners() {
+    console.log("🔗 Configurando todos os event listeners...");
     
-    // Formulário de cadastro
+    // 1. Formulário de cadastro
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            if (!validateForm()) {
-                showNotification('❌ Por favor, corrija os erros no formulário');
-                return;
-            }
-            
-            const formData = new FormData(this);
-            user = {
-                name: formData.get('name'),
-                email: formData.get('email'),
-                cep: formData.get('cep').replace(/\D/g, ''),
-                phone: formData.get('phone').replace(/\D/g, '')
-            };
-            
-            validateCEP(formData.get('cep')).then(isValid => {
-                if (isValid) {
-                    localStorage.setItem('eleganceUser', JSON.stringify(user));
-                    const registerModal = document.getElementById('registerModal');
-                    if (registerModal) registerModal.classList.remove('active');
-                    showNotification('✅ Cadastro realizado com sucesso!');
-                }
-            });
+            handleRegistration();
         });
     }
     
-    // Carrinho
+    // 2. Botões de adicionar ao carrinho (delegation)
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-to-cart') || e.target.closest('.add-to-cart')) {
+            const button = e.target.classList.contains('add-to-cart') ? e.target : e.target.closest('.add-to-cart');
+            const productId = parseInt(button.getAttribute('data-id'));
+            addToCart(productId);
+        }
+    });
+    
+    // 3. Carrinho
     const cartToggle = document.getElementById('cartToggle');
     if (cartToggle) {
-        cartToggle.addEventListener('click', function() {
-            if (!user) {
-                alert('Por favor, faça seu cadastro antes de visualizar o carrinho.');
-                const registerModal = document.getElementById('registerModal');
-                if (registerModal) registerModal.classList.add('active');
-                return;
-            }
-            
-            const cartModal = document.getElementById('cartModal');
-            const overlay = document.getElementById('overlay');
-            if (cartModal) cartModal.classList.add('active');
-            if (overlay) overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
+        cartToggle.addEventListener('click', openCartModal);
     }
     
-    // Fechar carrinho
+    // 4. Fechar carrinho
     const closeCart = document.getElementById('closeCart');
     const overlay = document.getElementById('overlay');
     
@@ -624,7 +590,7 @@ function setupEventListeners() {
         overlay.addEventListener('click', closeCartModal);
     }
     
-    // Finalizar compra
+    // 5. Finalizar compra
     const checkoutBtn = document.getElementById('checkoutBtn');
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', function() {
@@ -637,7 +603,7 @@ function setupEventListeners() {
         });
     }
     
-    // Pagamento
+    // 6. Opções de pagamento
     document.querySelectorAll('.payment-option').forEach(option => {
         option.addEventListener('click', function() {
             document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('active'));
@@ -648,25 +614,72 @@ function setupEventListeners() {
         });
     });
     
+    // 7. Confirmar pagamento
     const confirmPayment = document.getElementById('confirmPayment');
     if (confirmPayment) {
-        confirmPayment.addEventListener('click', function() {
-            if (!selectedPaymentMethod) {
-                alert('Por favor, selecione uma forma de pagamento.');
-                return;
-            }
-            sendWhatsAppOrder();
-        });
+        confirmPayment.addEventListener('click', sendWhatsAppOrder);
     }
     
-    // Fechar modais
+    // 8. Fechar modais
     document.querySelectorAll('.close-modal').forEach(closeBtn => {
         closeBtn.addEventListener('click', function() {
             this.closest('.modal').classList.remove('active');
         });
     });
     
-    console.log("✅ Event listeners configurados com sucesso!");
+    console.log("✅ Todos os event listeners configurados!");
+}
+
+function handleRegistration() {
+    if (!validateForm()) {
+        showNotification('❌ Por favor, corrija os erros no formulário');
+        return;
+    }
+    
+    const formData = new FormData(document.getElementById('registerForm'));
+    user = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        cep: formData.get('cep').replace(/\D/g, ''),
+        phone: formData.get('phone').replace(/\D/g, '')
+    };
+    
+    validateCEP(formData.get('cep')).then(isValid => {
+        if (isValid) {
+            localStorage.setItem('eleganceUser', JSON.stringify(user));
+            closeRegisterModal();
+            showNotification('✅ Cadastro realizado com sucesso!');
+            console.log("👤 Novo usuário cadastrado:", user.name);
+        }
+    });
+}
+
+function openRegisterModal() {
+    const registerModal = document.getElementById('registerModal');
+    if (registerModal) {
+        registerModal.classList.add('active');
+    }
+}
+
+function closeRegisterModal() {
+    const registerModal = document.getElementById('registerModal');
+    if (registerModal) {
+        registerModal.classList.remove('active');
+    }
+}
+
+function openCartModal() {
+    if (!user) {
+        alert('Por favor, faça seu cadastro antes de visualizar o carrinho.');
+        openRegisterModal();
+        return;
+    }
+    
+    const cartModal = document.getElementById('cartModal');
+    const overlay = document.getElementById('overlay');
+    if (cartModal) cartModal.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeCartModal() {
@@ -719,7 +732,10 @@ function openPaymentModal() {
 }
 
 function sendWhatsAppOrder() {
-    if (!user || cart.length === 0 || !selectedPaymentMethod) return;
+    if (!user || cart.length === 0 || !selectedPaymentMethod) {
+        alert('Por favor, complete todas as informações do pedido.');
+        return;
+    }
     
     // SUBSTITUA pelo seu número real (apenas dígitos, com código do país)
     const phoneNumber = '5511999999999';
@@ -804,8 +820,7 @@ function showNotification(message) {
     }, 3000);
 }
 
-// ===== INICIALIZAÇÃO DE FALLBACK =====
-// Garante que os produtos sejam renderizados mesmo se houver erro
+// ===== FALLBACK PARA PRODUTOS =====
 setTimeout(() => {
     const productsGrid = document.getElementById('productsGrid');
     if (productsGrid && productsGrid.innerHTML.trim() === '') {
