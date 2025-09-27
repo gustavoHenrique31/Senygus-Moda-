@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elegance - Moda Feminina</title>
-    <link rel="stylesheet" href="cssmamis.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Modal de Cadastro/Login -->
@@ -39,26 +39,39 @@
     <div id="paymentModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <h2>Selecione a Forma de Pagamento</h2>
-            <div class="payment-options">
-                <div class="payment-option" data-method="credit">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Cartão de Crédito</span>
-                </div>
-                <div class="payment-option" data-method="debit">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Cartão de Débito</span>
-                </div>
-                <div class="payment-option" data-method="pix">
-                    <i class="fas fa-qrcode"></i>
-                    <span>PIX</span>
+            <h2>Finalizar Pedido</h2>
+            
+            <div class="order-summary">
+                <h3>Resumo do Pedido</h3>
+                <div id="orderItems"></div>
+                <div class="order-total">
+                    <strong>Total: <span id="orderTotal">R$ 0,00</span></strong>
                 </div>
             </div>
-            <div id="paymentGateway" class="payment-gateway">
-                <!-- Integração com gateway de pagamento será inserida aqui -->
-                <p>Integração com gateway de pagamento</p>
+
+            <div class="payment-section">
+                <h3>Selecione a Forma de Pagamento</h3>
+                <div class="payment-options">
+                    <div class="payment-option" data-method="credit">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Cartão de Crédito</span>
+                    </div>
+                    <div class="payment-option" data-method="debit">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Cartão de Débito</span>
+                    </div>
+                    <div class="payment-option" data-method="pix">
+                        <i class="fas fa-qrcode"></i>
+                        <span>PIX</span>
+                    </div>
+                </div>
+                
+                <div id="paymentGateway" class="payment-gateway">
+                    <!-- Integração com gateway será mostrada aqui -->
+                </div>
             </div>
-            <button id="confirmPayment" class="btn-primary" disabled>Confirmar Pagamento</button>
+
+            <button id="confirmPayment" class="btn-primary">Confirmar Pedido via WhatsApp</button>
         </div>
     </div>
 
@@ -165,7 +178,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 Elegance. Todos os direitos reservados.</p>
+                <p>&copy; senygus.</p>
             </div>
         </div>
     </footer>
@@ -173,5 +186,3 @@
     <script src="scriptmamis.js"></script>
 </body>
 </html>
-
-
