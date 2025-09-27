@@ -212,12 +212,25 @@ function setupRealTimeValidation() {
     }
 }
 
-function formatCEP(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 5) {
-        value = value.substring(0, 5) + '-' + value.substring(5, 8);
-    }
-    e.target.value = value;
+function fillAddressData(data) {
+  document.getElementById('rua').value = data.logradouro || '';
+  document.getElementById('bairro').value = data.bairro || '';
+  document.getElementById('cidade').value = data.localidade || '';
+  document.getElementById('estado').value = data.uf || '';
+}
+
+// dentro de handleRegistration():
+user = {
+  name: formData.get('name'),
+  email: formData.get('email'),
+  cep: formData.get('cep').replace(/\D/g, ''),
+  phone: formData.get('phone').replace(/\D/g, ''),
+  state: formData.get('estado'),
+  city: formData.get('cidade'),
+  address: `${formData.get('rua')}, ${formData.get('numero')} - ${formData.get('bairro')}`
+};
+calculateShipping(user.state); // já calcula frete pelo estado
+
 }
 
 function formatPhone(e) {
@@ -777,3 +790,4 @@ style.textContent = `
     .error-message { color: #e74c3c; }
 `;
 document.head.appendChild(style);
+
