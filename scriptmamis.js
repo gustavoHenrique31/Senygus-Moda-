@@ -1,22 +1,85 @@
 // ===== VARIÁVEIS GLOBAIS =====
 let cart = JSON.parse(localStorage.getItem('eleganceCart')) || [];
-let user = JSON.parse(sessionStorage.getItem('eleganceUser')) || null; // Usando sessionStorage
+let user = null; // Não salva mais o usuário
 let selectedPaymentMethod = null;
 let shippingCost = 0;
 let userState = '';
 let userCity = '';
 let userAddress = '';
 
+// ===== LISTA DE PRODUTOS =====
+const products = [
+    { 
+        id: 1, 
+        name: "Vestido Floral Verão", 
+        price: 89.90, 
+        category: "vestidos",
+        description: "Vestido leve e fluido com estampa floral, ideal para os dias quentes de verão. Confeccionado em viscose de alta qualidade, proporciona conforto e elegância.",
+        details: ["Tecido: Viscose", "Composição: 100% Viscose", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
+    },
+    { 
+        id: 2, 
+        name: "Blusa Básica Algodão", 
+        price: 39.90, 
+        category: "blusas",
+        description: "Blusa básica em algodão, versátil e confortável. Perfeita para compor looks casuais ou mais elaborados.",
+        details: ["Tecido: Algodão", "Composição: 100% Algodão", "Modelagem: Reta", "Lavagem: Máquina"]
+    },
+    { 
+        id: 3, 
+        name: "Calça Jeans Skinny", 
+        price: 119.90, 
+        category: "calcas",
+        description: "Calça jeans modelo skinny, ajustada ao corpo. Confortável e moderna, ideal para o dia a dia.",
+        details: ["Tecido: Jeans", "Composição: 98% Algodão, 2% Elastano", "Modelo: Skinny", "Lavagem: Máquina"]
+    },
+    { 
+        id: 4, 
+        name: "Saia Midi Plissada", 
+        price: 69.90, 
+        category: "saias",
+        description: "Saia midi com detalhes plissados, elegante e feminina. Perfeita para ocasiões especiais ou para o dia a dia.",
+        details: ["Tecido: Poliéster", "Composição: 100% Poliéster", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
+    },
+    { 
+        id: 5, 
+        name: "Vestido Midi Elegante", 
+        price: 129.90, 
+        category: "vestidos",
+        description: "Vestido midi elegante com corte impecável. Ideal para eventos formais ou jantares especiais.",
+        details: ["Tecido: Cetim", "Composição: 100% Poliéster", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
+    },
+    { 
+        id: 6, 
+        name: "Blusa Tricot Inverno", 
+        price: 79.90, 
+        category: "blusas",
+        description: "Blusa tricot aconchegante, perfeita para os dias mais frios. Confortável e estilosa.",
+        details: ["Tecido: Tricot", "Composição: 70% Algodão, 30% Acrílico", "Modelagem: Amplo", "Lavagem: Lavagem à mão"]
+    },
+    { 
+        id: 7, 
+        name: "Calça Wide Leg", 
+        price: 99.90, 
+        category: "calcas",
+        description: "Calça wide leg com caimento perfeito. Tendência fashion que combina conforto e estilo.",
+        details: ["Tecido: Linho", "Composição: 100% Linho", "Modelo: Wide Leg", "Lavagem: Máquina"]
+    },
+    { 
+        id: 8, 
+        name: "Saia Curta Jeans", 
+        price: 59.90, 
+        category: "saias",
+        description: "Saia curta em jeans, despojada e jovem. Ideal para looks casuais e divertidos.",
+        details: ["Tecido: Jeans", "Composição: 98% Algodão, 2% Elastano", "Comprimento: Curto", "Lavagem: Máquina"]
+    }
+];
+
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 Inicializando Elegance Store...");
     
-    // Abre modal de cadastro após 2 segundos
-    setTimeout(() => {
-        if (!user) {
-            openRegisterModal();
-        }
-    }, 2000);
+    // REMOVIDO: Não abre mais modal automaticamente
     
     // Inicializa componentes
     initializeProducts();
@@ -24,83 +87,11 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     setupRealTimeValidation();
     
-    // Se usuário já está cadastrado, calcula frete
-    if (user) {
-        calculateShipping(user.state);
-    }
-    
     console.log("✅ Sistema inicializado com sucesso!");
 });
 
 // ===== PRODUTOS =====
 function initializeProducts() {
-    const products = [
-        { 
-            id: 1, 
-            name: "Vestido Floral Verão", 
-            price: 89.90, 
-            category: "vestidos",
-            description: "Vestido leve e fluido com estampa floral, ideal para os dias quentes de verão. Confeccionado em viscose de alta qualidade, proporciona conforto e elegância.",
-            details: ["Tecido: Viscose", "Composição: 100% Viscose", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
-        },
-        { 
-            id: 2, 
-            name: "Blusa Básica Algodão", 
-            price: 39.90, 
-            category: "blusas",
-            description: "Blusa básica em algodão, versátil e confortável. Perfeita para compor looks casuais ou mais elaborados.",
-            details: ["Tecido: Algodão", "Composição: 100% Algodão", "Modelagem: Reta", "Lavagem: Máquina"]
-        },
-        { 
-            id: 3, 
-            name: "Calça Jeans Skinny", 
-            price: 119.90, 
-            category: "calcas",
-            description: "Calça jeans modelo skinny, ajustada ao corpo. Confortável e moderna, ideal para o dia a dia.",
-            details: ["Tecido: Jeans", "Composição: 98% Algodão, 2% Elastano", "Modelo: Skinny", "Lavagem: Máquina"]
-        },
-        { 
-            id: 4, 
-            name: "Saia Midi Plissada", 
-            price: 69.90, 
-            category: "saias",
-            description: "Saia midi com detalhes plissados, elegante e feminina. Perfeita para ocasiões especiais ou para o dia a dia.",
-            details: ["Tecido: Poliéster", "Composição: 100% Poliéster", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
-        },
-        { 
-            id: 5, 
-            name: "Vestido Midi Elegante", 
-            price: 129.90, 
-            category: "vestidos",
-            description: "Vestido midi elegante com corte impecável. Ideal para eventos formais ou jantares especiais.",
-            details: ["Tecido: Cetim", "Composição: 100% Poliéster", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
-        },
-        { 
-            id: 6, 
-            name: "Blusa Tricot Inverno", 
-            price: 79.90, 
-            category: "blusas",
-            description: "Blusa tricot aconchegante, perfeita para os dias mais frios. Confortável e estilosa.",
-            details: ["Tecido: Tricot", "Composição: 70% Algodão, 30% Acrílico", "Modelagem: Amplo", "Lavagem: Lavagem à mão"]
-        },
-        { 
-            id: 7, 
-            name: "Calça Wide Leg", 
-            price: 99.90, 
-            category: "calcas",
-            description: "Calça wide leg com caimento perfeito. Tendência fashion que combina conforto e estilo.",
-            details: ["Tecido: Linho", "Composição: 100% Linho", "Modelo: Wide Leg", "Lavagem: Máquina"]
-        },
-        { 
-            id: 8, 
-            name: "Saia Curta Jeans", 
-            price: 59.90, 
-            category: "saias",
-            description: "Saia curta em jeans, despojada e jovem. Ideal para looks casuais e divertidos.",
-            details: ["Tecido: Jeans", "Composição: 98% Algodão, 2% Elastano", "Comprimento: Curto", "Lavagem: Máquina"]
-        }
-    ];
-    
     const productsGrid = document.getElementById('productsGrid');
     productsGrid.innerHTML = '';
     
@@ -291,6 +282,7 @@ function closeRegisterModal() {
 }
 
 function openPaymentModal() {
+    // MODIFICADO: Agora verifica se tem usuário, se não tem, abre o cadastro
     if (!user) {
         openRegisterModal();
         return;
@@ -680,7 +672,7 @@ function validateForm() {
     return isValid;
 }
 
-// ===== CADASTRO ATUALIZADO COM ENDEREÇO COMPLETO =====
+// ===== CADASTRO ATUALIZADO - NÃO SALVA MAIS =====
 function handleRegistration() {
     if (!validateForm()) {
         showNotification('❌ Corrija os erros no formulário');
@@ -689,6 +681,7 @@ function handleRegistration() {
     
     const formData = new FormData(document.getElementById('registerForm'));
     
+    // MODIFICADO: Agora só salva na variável global, não no localStorage
     user = {
         name: formData.get('name'),
         email: formData.get('email'),
@@ -702,6 +695,9 @@ function handleRegistration() {
     // Já calcula frete pelo estado
     calculateShipping(user.state);
     
-    // Usando sessionStorage para limpar após fechar o navegador
-    sessionStorage.setItem('eleganceUser', JSON.stringify(user));
-    closeRegister
+    closeRegisterModal();
+    showNotification('✅ Cadastro realizado! Agora finalize seu pedido.');
+    console.log("👤 Usuário cadastrado (não salvo):", user.name);
+    
+    // Abre automaticamente o modal de pagamento
+    openPaymentModal();
