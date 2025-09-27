@@ -7,7 +7,6 @@ const products = [
         price: 129.90,
         oldPrice: 159.90,
         image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Vestido floral midi perfeito para o verão",
         weight: 0.3
     },
     {
@@ -17,7 +16,6 @@ const products = [
         price: 89.90,
         oldPrice: 119.90,
         image: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Blusa de seda branca elegante e confortável",
         weight: 0.2
     },
     {
@@ -27,7 +25,6 @@ const products = [
         price: 149.90,
         oldPrice: null,
         image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Calça jeans skinny modelo clássico",
         weight: 0.5
     },
     {
@@ -37,55 +34,13 @@ const products = [
         price: 79.90,
         oldPrice: 99.90,
         image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Saia plissada preta para looks elegantes",
         weight: 0.25
-    },
-    {
-        id: 5,
-        name: "Vestido Vermelho Elegante",
-        category: "vestidos",
-        price: 179.90,
-        oldPrice: null,
-        image: "https://images.unsplash.com/photo-1539008835657-9e8e9680c956?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Vestido vermelho para ocasiões especiais",
-        weight: 0.4
-    },
-    {
-        id: 6,
-        name: "Blusa Listrada Azul",
-        category: "blusas",
-        price: 69.90,
-        oldPrice: 89.90,
-        image: "https://images.unsplash.com/photo-1525171254930-643fc8b95d0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Blusa listrada azul marinho",
-        weight: 0.2
-    },
-    {
-        id: 7,
-        name: "Calça Alfaiataria Bege",
-        category: "calcas",
-        price: 159.90,
-        oldPrice: 189.90,
-        image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Calça alfaiataria bege profissional",
-        weight: 0.6
-    },
-    {
-        id: 8,
-        name: "Saia Midi Evasê",
-        category: "saias",
-        price: 99.90,
-        oldPrice: 129.90,
-        image: "https://images.unsplash.com/photo-1506629905607-47d30b8c4c3a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-        description: "Saia midi evasê fluída e confortável",
-        weight: 0.3
     }
 ];
 
 // ===== CONFIGURAÇÕES DA LOJA =====
 const storeConfig = {
     cep: "13214203",
-    phone: "(11) 99999-9999",
     freightRates: {
         sp: 15.00,
         sul: 25.00,
@@ -106,7 +61,7 @@ let userCity = '';
 
 // ===== INICIALIZAÇÃO PRINCIPAL =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("=== ELEGANCE - SISTEMA INICIADO ===");
+    console.log("=== ELEGANCE - INICIANDO SISTEMA ===");
     
     // 1. Primeiro: Carrega dados salvos
     loadSavedData();
@@ -117,10 +72,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. Terceiro: Configura validações
     setupRealTimeValidation();
     
-    // 4. Quarto: Configura todos os event listeners
+    // 4. Quarto: Configura event listeners
     setupAllEventListeners();
     
-    console.log("✅ Sistema totalmente carregado e funcionando!");
+    console.log("✅ Sistema pronto para uso!");
 });
 
 // ===== CARREGAMENTO DE DADOS SALVOS =====
@@ -130,22 +85,36 @@ function loadSavedData() {
     // Carrega usuário
     const savedUser = localStorage.getItem('eleganceUser');
     if (savedUser) {
-        user = JSON.parse(savedUser);
-        console.log("👤 Usuário carregado:", user.name);
-        userState = user.state || '';
-        userCity = user.city || '';
-    } else {
-        console.log("📝 Nenhum usuário encontrado, modal será aberto em 2 segundos");
-        // Abre modal após 2 segundos
-        setTimeout(openRegisterModal, 2000);
+        try {
+            user = JSON.parse(savedUser);
+            userState = user.state || '';
+            userCity = user.city || '';
+            console.log("👤 Usuário carregado:", user.name);
+        } catch (e) {
+            console.error("Erro ao carregar usuário:", e);
+            user = null;
+        }
     }
     
     // Carrega carrinho
     const savedCart = localStorage.getItem('eleganceCart');
     if (savedCart) {
-        cart = JSON.parse(savedCart);
-        console.log("🛒 Carrinho carregado com", cart.length, "itens");
-        updateCart();
+        try {
+            cart = JSON.parse(savedCart);
+            console.log("🛒 Carrinho carregado:", cart.length, "itens");
+            updateCart();
+        } catch (e) {
+            console.error("Erro ao carregar carrinho:", e);
+            cart = [];
+        }
+    }
+    
+    // Se não tem usuário, abre modal após 2 segundos
+    if (!user) {
+        console.log("📝 Abrindo modal de cadastro em 2 segundos...");
+        setTimeout(() => {
+            openRegisterModal();
+        }, 2000);
     }
 }
 
@@ -154,28 +123,19 @@ function renderProducts() {
     console.log("🎨 Renderizando produtos...");
     
     const productsGrid = document.getElementById('productsGrid');
-    
     if (!productsGrid) {
-        console.error("❌ ERRO: Elemento productsGrid não encontrado!");
+        console.error("❌ Elemento productsGrid não encontrado!");
         return;
     }
     
-    // Limpa o grid
     productsGrid.innerHTML = '';
     
-    // Verifica se há produtos
-    if (products.length === 0) {
-        productsGrid.innerHTML = '<p style="text-align: center; padding: 40px; color: #777;">Nenhum produto disponível no momento.</p>';
-        return;
-    }
-    
-    // Cria os cards de produtos
     products.forEach(product => {
         const productCard = document.createElement('div');
         productCard.className = 'product-card';
         productCard.innerHTML = `
             <div class="product-image">
-                <img src="${product.image}" alt="${product.name}" loading="lazy">
+                <img src="${product.image}" alt="${product.name}">
                 ${product.oldPrice ? '<span class="product-badge">Oferta</span>' : ''}
             </div>
             <div class="product-info">
@@ -193,81 +153,50 @@ function renderProducts() {
         productsGrid.appendChild(productCard);
     });
     
-    console.log(`✅ ${products.length} produtos renderizados com sucesso!`);
+    console.log(`✅ ${products.length} produtos renderizados!`);
 }
 
 // ===== SISTEMA DE CADASTRO COM API DE CEP =====
 function setupRealTimeValidation() {
-    console.log("🔍 Configurando validações em tempo real...");
+    console.log("🔍 Configurando validações...");
     
     const cepInput = document.getElementById('cep');
-    const phoneInput = document.getElementById('phone');
-    
-    // Validação de CEP em tempo real
     if (cepInput) {
-        cepInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            
-            // Formata CEP (XXXXX-XXX)
-            if (value.length > 5) {
-                value = value.substring(0, 5) + '-' + value.substring(5, 8);
-            }
-            
-            e.target.value = value;
-            
-            // Quando CEP estiver completo, consulta API
-            if (value.length === 9) {
-                console.log("🔎 Consultando CEP:", value);
-                validateCEP(value);
-            }
-        });
-        
-        // Busca automática ao perder o foco (se CEP estiver completo)
+        cepInput.addEventListener('input', formatCEP);
         cepInput.addEventListener('blur', function() {
-            if (this.value.length === 9) {
-                validateCEP(this.value);
-            }
+            if (this.value.length === 9) validateCEP(this.value);
         });
     }
     
-    // Validação de telefone em tempo real
+    const phoneInput = document.getElementById('phone');
     if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            
-            // Formata telefone (XX) XXXXX-XXXX
-            if (value.length > 0) {
-                if (value.length <= 2) {
-                    value = '(' + value;
-                } else if (value.length <= 7) {
-                    value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
-                } else {
-                    value = '(' + value.substring(0, 2) + ') ' + value.substring(2, 7) + '-' + value.substring(7, 11);
-                }
-            }
-            
-            e.target.value = value;
-        });
-    }
-    
-    // Validação de e-mail em tempo real
-    const emailInput = document.getElementById('email');
-    if (emailInput) {
-        emailInput.addEventListener('blur', function() {
-            validateEmail(this.value);
-        });
-    }
-    
-    // Validação de nome em tempo real
-    const nameInput = document.getElementById('name');
-    if (nameInput) {
-        nameInput.addEventListener('blur', function() {
-            validateName(this.value);
-        });
+        phoneInput.addEventListener('input', formatPhone);
     }
 }
 
-// ===== VALIDAÇÃO DE CEP COM API VIA CEP =====
+function formatCEP(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 5) {
+        value = value.substring(0, 5) + '-' + value.substring(5, 8);
+    }
+    e.target.value = value;
+}
+
+function formatPhone(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 0) {
+        if (value.length <= 2) {
+            value = '(' + value;
+        } else if (value.length <= 7) {
+            value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
+        } else {
+            value = '(' + value.substring(0, 2) + ') ' + value.substring(2, 7) + '-' + value.substring(7, 11);
+        }
+    }
+    e.target.value = value;
+}
+
+// ===== API DE CEP - FUNCIONANDO =====
 async function validateCEP(cep) {
     const cepClean = cep.replace(/\D/g, '');
     
@@ -276,12 +205,14 @@ async function validateCEP(cep) {
         return false;
     }
     
-    // Mostra loading
     showCEPLoading(true);
     
     try {
-        console.log("🌐 Consultando API ViaCEP...");
+        console.log("🌐 Consultando CEP:", cepClean);
         const response = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
+        
+        if (!response.ok) throw new Error('Erro na API');
+        
         const data = await response.json();
         
         if (data.erro) {
@@ -290,41 +221,39 @@ async function validateCEP(cep) {
             return false;
         }
         
-        // Preenche automaticamente os dados da localização
+        // PREENCHE OS DADOS AUTOMATICAMENTE
         fillAddressData(data);
-        clearInputError('cep');
         showCEPLoading(false);
-        
-        console.log(`📍 Localização detectada: ${data.localidade}/${data.uf}`);
         return true;
         
     } catch (error) {
-        console.error("Erro na consulta do CEP:", error);
-        showInputError('cep', 'Erro ao consultar CEP. Tente novamente.');
+        console.error("Erro na API:", error);
+        showInputError('cep', 'Erro ao consultar CEP');
         showCEPLoading(false);
         return false;
     }
 }
 
-function fillAddressData(addressData) {
-    userState = addressData.uf;
-    userCity = addressData.localidade;
+function fillAddressData(data) {
+    userState = data.uf;
+    userCity = data.localidade;
     
-    // Atualiza interface para mostrar a localização detectada
+    // Atualiza interface
     const cepGroup = document.getElementById('cep').closest('.form-group');
     let locationInfo = cepGroup.querySelector('.location-info');
     
     if (!locationInfo) {
         locationInfo = document.createElement('div');
         locationInfo.className = 'location-info';
-        locationInfo.style.cssText = 'color: #27ae60; font-size: 0.9rem; margin-top: 5px;';
         cepGroup.appendChild(locationInfo);
     }
     
-    locationInfo.innerHTML = `📍 Localização detectada: ${addressData.localidade} - ${addressData.uf}`;
+    locationInfo.innerHTML = `📍 ${data.localidade} - ${data.uf}`;
+    locationInfo.style.cssText = 'color: #27ae60; font-size: 0.9rem; margin-top: 5px; font-weight: 500;';
     
-    // Calcula frete automaticamente
-    calculateShipping(addressData.uf);
+    // CALCULA FRETE AUTOMATICAMENTE
+    calculateShipping(data.uf);
+    console.log("🚚 Frete calculado para:", data.uf);
 }
 
 function showCEPLoading(show) {
@@ -336,96 +265,23 @@ function showCEPLoading(show) {
         if (!loadingElement) {
             loadingElement = document.createElement('div');
             loadingElement.className = 'cep-loading';
-            loadingElement.style.cssText = 'color: #3498db; font-size: 0.8rem; margin-top: 5px;';
             cepGroup.appendChild(loadingElement);
         }
-        loadingElement.innerHTML = '🔍 Consultando CEP...';
+        loadingElement.innerHTML = '⏳ Consultando CEP...';
+        loadingElement.style.cssText = 'color: #3498db; font-size: 0.8rem; margin-top: 5px;';
     } else if (loadingElement) {
         loadingElement.remove();
     }
 }
 
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showInputError('email', 'E-mail inválido');
-        return false;
-    }
-    clearInputError('email');
-    return true;
-}
-
-function validateName(name) {
-    if (name.length < 3) {
-        showInputError('name', 'Nome deve ter pelo menos 3 caracteres');
-        return false;
-    }
-    clearInputError('name');
-    return true;
-}
-
-function validatePhone(phone) {
-    const phoneClean = phone.replace(/\D/g, '');
-    if (phoneClean.length < 10 || phoneClean.length > 11) {
-        showInputError('phone', 'Telefone deve ter 10 ou 11 dígitos');
-        return false;
-    }
-    clearInputError('phone');
-    return true;
-}
-
-function showInputError(fieldId, message) {
-    const field = document.getElementById(fieldId);
-    if (!field) return;
-    
-    const formGroup = field.closest('.form-group');
-    clearInputError(fieldId);
-    
-    field.style.borderColor = '#e74c3c';
-    const errorElement = document.createElement('span');
-    errorElement.className = 'error-message';
-    errorElement.style.cssText = 'color: #e74c3c; font-size: 0.8rem; margin-top: 5px; display: block;';
-    errorElement.textContent = message;
-    formGroup.appendChild(errorElement);
-}
-
-function clearInputError(fieldId) {
-    const field = document.getElementById(fieldId);
-    if (!field) return;
-    
-    const formGroup = field.closest('.form-group');
-    const errorElement = formGroup.querySelector('.error-message');
-    field.style.borderColor = '';
-    if (errorElement) errorElement.remove();
-}
-
-function validateForm() {
-    const name = document.getElementById('name')?.value.trim() || '';
-    const email = document.getElementById('email')?.value.trim() || '';
-    const cep = document.getElementById('cep')?.value.replace(/\D/g, '') || '';
-    const phone = document.getElementById('phone')?.value.replace(/\D/g, '') || '';
-    
-    let isValid = true;
-    
-    if (!validateName(name)) isValid = false;
-    if (!validateEmail(email)) isValid = false;
-    if (cep.length !== 8) {
-        showInputError('cep', 'CEP deve ter 8 dígitos');
-        isValid = false;
-    }
-    if (!validatePhone(phone)) isValid = false;
-    
-    return isValid;
-}
-
 // ===== CÁLCULO DE FRETE =====
 function calculateShipping(state) {
-    const stateRegion = getRegionByState(state);
-    shippingCost = storeConfig.freightRates[stateRegion] || storeConfig.freightRates.sudeste;
+    const region = getRegionByState(state);
+    shippingCost = storeConfig.freightRates[region] || storeConfig.freightRates.sudeste;
     
-    console.log(`🚚 Frete calculado para ${state}: R$ ${shippingCost.toFixed(2)}`);
+    console.log(`💰 Frete calculado: ${state} -> R$ ${shippingCost.toFixed(2)}`);
     
-    // Atualiza interface se o carrinho estiver aberto
+    // Atualiza carrinho se tiver itens
     if (cart.length > 0) {
         updateCart();
     }
@@ -445,29 +301,89 @@ function getRegionByState(state) {
     return regions[state] || 'sudeste';
 }
 
+// ===== VALIDAÇÕES =====
+function validateForm() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const cep = document.getElementById('cep').value.replace(/\D/g, '');
+    const phone = document.getElementById('phone').value.replace(/\D/g, '');
+    
+    let isValid = true;
+    
+    // Valida nome
+    if (name.length < 3) {
+        showInputError('name', 'Nome deve ter pelo menos 3 caracteres');
+        isValid = false;
+    } else {
+        clearInputError('name');
+    }
+    
+    // Valida email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showInputError('email', 'E-mail inválido');
+        isValid = false;
+    } else {
+        clearInputError('email');
+    }
+    
+    // Valida CEP
+    if (cep.length !== 8) {
+        showInputError('cep', 'CEP deve ter 8 dígitos');
+        isValid = false;
+    } else {
+        clearInputError('cep');
+    }
+    
+    // Valida telefone
+    if (phone.length < 10 || phone.length > 11) {
+        showInputError('phone', 'Telefone deve ter 10 ou 11 dígitos');
+        isValid = false;
+    } else {
+        clearInputError('phone');
+    }
+    
+    return isValid;
+}
+
+function showInputError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    
+    clearInputError(fieldId);
+    
+    field.style.borderColor = '#e74c3c';
+    const errorElement = document.createElement('span');
+    errorElement.className = 'error-message';
+    errorElement.textContent = message;
+    errorElement.style.cssText = 'color: #e74c3c; font-size: 0.8rem; margin-top: 5px; display: block;';
+    field.closest('.form-group').appendChild(errorElement);
+}
+
+function clearInputError(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    
+    field.style.borderColor = '';
+    const errorElement = field.closest('.form-group').querySelector('.error-message');
+    if (errorElement) errorElement.remove();
+}
+
 // ===== SISTEMA DE CARRINHO =====
 function addToCart(productId) {
-    console.log(`➕ Adicionando produto ${productId} ao carrinho...`);
-    
     if (!user) {
-        console.log("⚠️ Usuário não cadastrado, abrindo modal...");
-        alert('Por favor, faça seu cadastro antes de adicionar produtos ao carrinho.');
+        alert('⚠️ Faça seu cadastro antes de comprar!');
         openRegisterModal();
         return;
     }
     
     const product = products.find(p => p.id === productId);
-    
-    if (!product) {
-        console.error("❌ Produto não encontrado!");
-        return;
-    }
+    if (!product) return;
     
     const existingItem = cart.find(item => item.id === productId);
     
     if (existingItem) {
         existingItem.quantity += 1;
-        console.log(`📦 Aumentada quantidade de ${product.name}: ${existingItem.quantity}`);
     } else {
         cart.push({
             id: product.id,
@@ -477,30 +393,24 @@ function addToCart(productId) {
             quantity: 1,
             weight: product.weight
         });
-        console.log(`🆕 Novo produto adicionado: ${product.name}`);
     }
     
     updateCart();
-    showNotification('✅ ' + product.name + ' adicionado ao carrinho!');
+    showNotification('✅ ' + product.name + ' adicionado!');
 }
 
 function updateCart() {
     localStorage.setItem('eleganceCart', JSON.stringify(cart));
     
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const cartCountElement = document.querySelector('.cart-count');
-    
-    if (cartCountElement) {
-        cartCountElement.textContent = totalItems;
-    }
+    document.querySelector('.cart-count').textContent = totalItems;
     
     updateCartModal();
-    console.log(`🛒 Carrinho atualizado: ${totalItems} itens`);
 }
 
 function updateCartModal() {
     const cartItems = document.getElementById('cartItems');
-    const cartTotalElement = document.getElementById('cartTotal');
+    const cartTotal = document.getElementById('cartTotal');
     const checkoutBtn = document.getElementById('checkoutBtn');
     
     if (!cartItems) return;
@@ -508,23 +418,18 @@ function updateCartModal() {
     cartItems.innerHTML = '';
     
     if (cart.length === 0) {
-        cartItems.innerHTML = '<p style="text-align: center; padding: 40px; color: #777;">Seu carrinho está vazio.</p>';
-        if (cartTotalElement) cartTotalElement.textContent = 'R$ 0,00';
-        if (checkoutBtn) checkoutBtn.disabled = true;
+        cartItems.innerHTML = '<p style="text-align: center; padding: 40px; color: #777;">Carrinho vazio</p>';
+        cartTotal.textContent = 'R$ 0,00';
+        checkoutBtn.disabled = true;
         return;
     }
     
-    if (checkoutBtn) checkoutBtn.disabled = false;
+    checkoutBtn.disabled = false;
     
     let subtotal = 0;
     cart.forEach(item => {
         subtotal += item.price * item.quantity;
-    });
-    
-    const total = subtotal + shippingCost;
-    
-    // Adiciona itens ao carrinho
-    cart.forEach(item => {
+        
         const cartItem = document.createElement('div');
         cartItem.className = 'cart-item';
         cartItem.innerHTML = `
@@ -547,7 +452,8 @@ function updateCartModal() {
         cartItems.appendChild(cartItem);
     });
     
-    // Adiciona informações de frete
+    const total = subtotal + shippingCost;
+    
     const shippingInfo = document.createElement('div');
     shippingInfo.className = 'shipping-info';
     shippingInfo.innerHTML = `
@@ -562,39 +468,30 @@ function updateCartModal() {
     `;
     cartItems.appendChild(shippingInfo);
     
-    if (cartTotalElement) {
-        cartTotalElement.textContent = `R$ ${total.toFixed(2)}`;
-    }
+    cartTotal.textContent = `R$ ${total.toFixed(2)}`;
     
     setupCartEventListeners();
 }
 
 function setupCartEventListeners() {
-    document.querySelectorAll('.decrease').forEach(button => {
-        button.addEventListener('click', function() {
+    document.querySelectorAll('.decrease').forEach(btn => {
+        btn.addEventListener('click', function() {
             const productId = parseInt(this.getAttribute('data-id'));
             const item = cart.find(item => item.id === productId);
             if (item) updateCartQuantity(productId, item.quantity - 1);
         });
     });
     
-    document.querySelectorAll('.increase').forEach(button => {
-        button.addEventListener('click', function() {
+    document.querySelectorAll('.increase').forEach(btn => {
+        btn.addEventListener('click', function() {
             const productId = parseInt(this.getAttribute('data-id'));
             const item = cart.find(item => item.id === productId);
             if (item) updateCartQuantity(productId, item.quantity + 1);
         });
     });
     
-    document.querySelectorAll('.quantity-input').forEach(input => {
-        input.addEventListener('change', function() {
-            const productId = parseInt(this.getAttribute('data-id'));
-            updateCartQuantity(productId, parseInt(this.value));
-        });
-    });
-    
-    document.querySelectorAll('.remove-item').forEach(button => {
-        button.addEventListener('click', function() {
+    document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', function() {
             const productId = parseInt(this.getAttribute('data-id'));
             removeFromCart(productId);
         });
@@ -614,26 +511,23 @@ function updateCartQuantity(productId, newQuantity) {
 }
 
 function removeFromCart(productId) {
-    const productName = cart.find(item => item.id === productId)?.name || 'Produto';
+    const productName = cart.find(item => item.id === productId)?.name;
     cart = cart.filter(item => item.id !== productId);
     updateCart();
-    showNotification('🗑️ ' + productName + ' removido do carrinho');
+    showNotification('🗑️ ' + productName + ' removido');
 }
 
 // ===== SISTEMA DE EVENTOS =====
 function setupAllEventListeners() {
-    console.log("🔗 Configurando todos os event listeners...");
+    console.log("🔗 Configurando eventos...");
     
-    // 1. Formulário de cadastro
-    const registerForm = document.getElementById('registerForm');
-    if (registerForm) {
-        registerForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleRegistration();
-        });
-    }
+    // Cadastro
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleRegistration();
+    });
     
-    // 2. Botões de adicionar ao carrinho (event delegation)
+    // Botões de compra
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('add-to-cart') || e.target.closest('.add-to-cart')) {
             const button = e.target.classList.contains('add-to-cart') ? e.target : e.target.closest('.add-to-cart');
@@ -642,27 +536,22 @@ function setupAllEventListeners() {
         }
     });
     
-    // 3. Carrinho
-    const cartToggle = document.getElementById('cartToggle');
-    if (cartToggle) {
-        cartToggle.addEventListener('click', openCartModal);
-    }
+    // Carrinho
+    document.getElementById('cartToggle').addEventListener('click', openCartModal);
+    document.getElementById('closeCart').addEventListener('click', closeCartModal);
+    document.getElementById('overlay').addEventListener('click', closeCartModal);
     
-    // 4. Fechar carrinho
-    document.getElementById('closeCart')?.addEventListener('click', closeCartModal);
-    document.getElementById('overlay')?.addEventListener('click', closeCartModal);
-    
-    // 5. Finalizar compra
-    document.getElementById('checkoutBtn')?.addEventListener('click', function() {
+    // Checkout
+    document.getElementById('checkoutBtn').addEventListener('click', function() {
         if (cart.length === 0) {
-            alert('Seu carrinho está vazio!');
+            alert('Carrinho vazio!');
             return;
         }
         closeCartModal();
         openPaymentModal();
     });
     
-    // 6. Pagamento
+    // Pagamento
     document.querySelectorAll('.payment-option').forEach(option => {
         option.addEventListener('click', function() {
             document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('active'));
@@ -672,22 +561,20 @@ function setupAllEventListeners() {
         });
     });
     
-    // 7. Confirmar pedido
-    document.getElementById('confirmPayment')?.addEventListener('click', sendWhatsAppOrder);
+    // Finalizar
+    document.getElementById('confirmPayment').addEventListener('click', sendWhatsAppOrder);
     
-    // 8. Fechar modais
-    document.querySelectorAll('.close-modal').forEach(closeBtn => {
-        closeBtn.addEventListener('click', function() {
+    // Fechar modais
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
             this.closest('.modal').classList.remove('active');
         });
     });
-    
-    console.log("✅ Todos os event listeners configurados!");
 }
 
 function handleRegistration() {
     if (!validateForm()) {
-        showNotification('❌ Por favor, corrija os erros no formulário');
+        showNotification('❌ Corrija os erros no formulário');
         return;
     }
     
@@ -701,118 +588,102 @@ function handleRegistration() {
         city: userCity
     };
     
-    // Valida CEP antes de salvar
-    validateCEP(formData.get('cep')).then(isValid => {
-        if (isValid) {
-            localStorage.setItem('eleganceUser', JSON.stringify(user));
-            closeRegisterModal();
-            showNotification('✅ Cadastro realizado com sucesso!');
-            console.log("👤 Novo usuário cadastrado:", user.name);
-        }
-    });
+    localStorage.setItem('eleganceUser', JSON.stringify(user));
+    closeRegisterModal();
+    showNotification('✅ Cadastro realizado!');
 }
 
 function openRegisterModal() {
-    const registerModal = document.getElementById('registerModal');
-    if (registerModal) {
-        registerModal.classList.add('active');
-        console.log("📝 Modal de cadastro aberto");
-    }
+    document.getElementById('registerModal').classList.add('active');
 }
 
 function closeRegisterModal() {
-    const registerModal = document.getElementById('registerModal');
-    if (registerModal) {
-        registerModal.classList.remove('active');
-    }
+    document.getElementById('registerModal').classList.remove('active');
 }
 
 function openCartModal() {
     if (!user) {
-        alert('Por favor, faça seu cadastro antes de visualizar o carrinho.');
+        alert('⚠️ Faça cadastro primeiro!');
         openRegisterModal();
         return;
     }
-    
-    const cartModal = document.getElementById('cartModal');
-    const overlay = document.getElementById('overlay');
-    if (cartModal) cartModal.classList.add('active');
-    if (overlay) overlay.classList.add('active');
+    document.getElementById('cartModal').classList.add('active');
+    document.getElementById('overlay').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
 function closeCartModal() {
-    const cartModal = document.getElementById('cartModal');
-    const overlay = document.getElementById('overlay');
-    
-    if (cartModal) cartModal.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
+    document.getElementById('cartModal').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
     document.body.style.overflow = 'auto';
 }
 
 function openPaymentModal() {
     const orderItems = document.getElementById('orderItems');
     const orderTotal = document.getElementById('orderTotal');
-    const paymentModal = document.getElementById('paymentModal');
     
-    if (!orderItems || !orderTotal || !paymentModal) return;
-    
-    let itemsHTML = '';
+    let html = '';
     let subtotal = 0;
     
     cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        subtotal += itemTotal;
-        itemsHTML += `<div class="order-item"><span>${item.name} x${item.quantity}</span><span>R$ ${itemTotal.toFixed(2)}</span></div>`;
+        const total = item.price * item.quantity;
+        subtotal += total;
+        html += `<div class="order-item"><span>${item.name} x${item.quantity}</span><span>R$ ${total.toFixed(2)}</span></div>`;
     });
     
     const total = subtotal + shippingCost;
-    itemsHTML += `<div class="order-item"><span>Frete</span><span>R$ ${shippingCost.toFixed(2)}</span></div>`;
+    html += `<div class="order-item"><span>Frete</span><span>R$ ${shippingCost.toFixed(2)}</span></div>`;
     
-    orderItems.innerHTML = itemsHTML;
+    orderItems.innerHTML = html;
     orderTotal.textContent = `R$ ${total.toFixed(2)}`;
     
-    document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('active'));
-    document.getElementById('confirmPayment').disabled = true;
-    selectedPaymentMethod = null;
-    
-    paymentModal.classList.add('active');
+    document.getElementById('paymentModal').classList.add('active');
 }
 
 function sendWhatsAppOrder() {
     if (!user || cart.length === 0 || !selectedPaymentMethod) {
-        alert('Por favor, complete todas as informações do pedido.');
+        alert('Complete todas as informações!');
         return;
     }
     
-    const phoneNumber = '5511999999999'; // SUBSTITUA pelo seu número
+    const phone = '5511999999999'; // ALTERE PARA SEU NÚMERO
     
-    let message = `*NOVO PEDIDO - ELEGANCE*%0A%0A*Cliente:* ${user.name}%0A*E-mail:* ${user.email}%0A*Telefone:* ${user.phone}%0A*CEP:* ${user.cep}%0A*Cidade/Estado:* ${userCity}/${userState}%0A%0A*Itens do Pedido:*%0A`;
+    let message = `*PEDIDO - ELEGANCE*%0A%0A`;
+    message += `*Cliente:* ${user.name}%0A`;
+    message += `*Email:* ${user.email}%0A`;
+    message += `*Telefone:* ${user.phone}%0A`;
+    message += `*CEP:* ${user.cep}%0A`;
+    message += `*Cidade/UF:* ${userCity}/${userState}%0A%0A`;
+    message += `*Itens:*%0A`;
     
     let subtotal = 0;
     cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        subtotal += itemTotal;
-        message += `• ${item.name} - R$ ${item.price.toFixed(2)} x ${item.quantity} = R$ ${itemTotal.toFixed(2)}%0A`;
+        const total = item.price * item.quantity;
+        subtotal += total;
+        message += `• ${item.name} - R$ ${item.price.toFixed(2)} x${item.quantity} = R$ ${total.toFixed(2)}%0A`;
     });
     
     const total = subtotal + shippingCost;
-    message += `%0A*Subtotal:* R$ ${subtotal.toFixed(2)}%0A*Frete:* R$ ${shippingCost.toFixed(2)}%0A*Total:* R$ ${total.toFixed(2)}%0A*Pagamento:* ${getPaymentMethodName(selectedPaymentMethod)}%0A%0A*Data:* ${new Date().toLocaleDateString('pt-BR')}`;
+    message += `%0A*Subtotal:* R$ ${subtotal.toFixed(2)}%0A`;
+    message += `*Frete:* R$ ${shippingCost.toFixed(2)}%0A`;
+    message += `*Total:* R$ ${total.toFixed(2)}%0A`;
+    message += `*Pagamento:* ${getPaymentMethodName(selectedPaymentMethod)}%0A`;
+    message += `*Data:* ${new Date().toLocaleDateString('pt-BR')}`;
     
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
     
-    // Limpa carrinho
+    // Limpa tudo
     cart = [];
     localStorage.removeItem('eleganceCart');
     updateCart();
     document.getElementById('paymentModal').classList.remove('active');
-    showNotification('✅ Pedido enviado para WhatsApp!');
+    showNotification('✅ Pedido enviado!');
 }
 
 function getPaymentMethodName(method) {
     const methods = {
         'credit': 'Cartão de Crédito',
-        'debit': 'Cartão de Débito', 
+        'debit': 'Cartão de Débito',
         'pix': 'PIX'
     };
     return methods[method] || method;
@@ -825,14 +696,13 @@ function showNotification(message) {
         position: fixed;
         top: 100px;
         right: 20px;
-        background-color: #000;
+        background: #000;
         color: white;
         padding: 15px 20px;
         border-radius: 5px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         z-index: 2000;
-        transform: translateX(150%);
-        transition: transform 0.3s ease;
+        transform: translateX(400px);
+        transition: transform 0.3s;
         font-weight: 500;
     `;
     notification.textContent = message;
@@ -840,27 +710,21 @@ function showNotification(message) {
     
     setTimeout(() => notification.style.transform = 'translateX(0)', 100);
     setTimeout(() => {
-        notification.style.transform = 'translateX(150%)';
-        setTimeout(() => {
-            if (notification.parentNode) document.body.removeChild(notification);
-        }, 300);
+        notification.style.transform = 'translateX(400px)';
+        setTimeout(() => document.body.removeChild(notification), 300);
     }, 3000);
 }
 
-// ===== CSS DINÂMICO PARA VALIDAÇÕES =====
+// ===== CSS DINÂMICO =====
 const style = document.createElement('style');
 style.textContent = `
-    .location-info { color: #27ae60; font-size: 0.9rem; margin-top: 5px; }
-    .cep-loading { color: #3498db; font-size: 0.8rem; margin-top: 5px; }
-    .error-message { color: #e74c3c; font-size: 0.8rem; margin-top: 5px; display: block; }
+    .location-info, .cep-loading, .error-message {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.8rem;
+    }
+    .location-info { color: #27ae60; font-weight: 500; }
+    .cep-loading { color: #3498db; }
+    .error-message { color: #e74c3c; }
 `;
 document.head.appendChild(style);
-
-// ===== FALLBACK =====
-setTimeout(() => {
-    const productsGrid = document.getElementById('productsGrid');
-    if (productsGrid && productsGrid.innerHTML.trim() === '') {
-        console.log("🔄 Fallback: Renderizando produtos...");
-        renderProducts();
-    }
-}, 500);
