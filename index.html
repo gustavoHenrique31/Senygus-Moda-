@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Senygus - Moda Feminina</title>
+    <title>Senygus - Moda Feminina</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="cssmamis.css">
 </head>
@@ -17,18 +17,48 @@
                 <div class="form-group">
                     <label for="name">Nome Completo</label>
                     <input type="text" id="name" name="name" required>
+                    <span class="error-message" id="nameError"></span>
                 </div>
                 <div class="form-group">
                     <label for="email">E-mail</label>
                     <input type="email" id="email" name="email" required>
+                    <span class="error-message" id="emailError"></span>
                 </div>
                 <div class="form-group">
                     <label for="cep">CEP</label>
-                    <input type="text" id="cep" name="cep" required>
+                    <input type="text" id="cep" name="cep" placeholder="Ex: 01001-000" required>
+                    <span class="error-message" id="cepError"></span>
+                    <span class="cep-loading" id="cepLoading" style="display: none;">Consultando CEP...</span>
+                    <div class="location-info" id="locationInfo" style="display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="rua">Rua</label>
+                    <input type="text" id="rua" name="rua" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="numero">Número</label>
+                    <input type="text" id="numero" name="numero" required>
+                    <span class="error-message" id="numeroError"></span>
+                </div>
+                <div class="form-group">
+                    <label for="bairro">Bairro</label>
+                    <input type="text" id="bairro" name="bairro" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="cidade">Cidade</label>
+                    <input type="text" id="cidade" name="cidade" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="estado">Estado</label>
+                    <input type="text" id="estado" name="estado" required readonly>
                 </div>
                 <div class="form-group">
                     <label for="phone">Telefone</label>
                     <input type="tel" id="phone" name="phone" required>
+                    <span class="error-message" id="phoneError"></span>
+                </div>
+                <div class="shipping-info" id="shippingInfo" style="display: none;">
+                    Frete calculado: <span id="shippingCost">R$ 0,00</span>
                 </div>
                 <button type="submit" class="btn-primary">Cadastrar e Continuar</button>
             </form>
@@ -134,30 +164,9 @@
             <button class="checkout-btn" id="checkoutBtn" disabled>Finalizar Compra</button>
         </div>
     </div>
-<div class="form-group">
-  <label for="cep">CEP</label>
-  <input type="text" id="cep" name="cep" required>
-</div>
-<div class="form-group">
-  <label for="rua">Rua</label>
-  <input type="text" id="rua" name="rua" required>
-</div>
-<div class="form-group">
-  <label for="numero">Número</label>
-  <input type="text" id="numero" name="numero" required>
-</div>
-<div class="form-group">
-  <label for="bairro">Bairro</label>
-  <input type="text" id="bairro" name="bairro" required>
-</div>
-<div class="form-group">
-  <label for="cidade">Cidade</label>
-  <input type="text" id="cidade" name="cidade" required>
-</div>
-<div class="form-group">
-  <label for="estado">Estado</label>
-  <input type="text" id="estado" name="estado" required>
-</div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
 
     <!-- Footer -->
     <footer>
@@ -198,6 +207,3 @@
     <script src="scriptmamis.js"></script>
 </body>
 </html>
-
-
-
