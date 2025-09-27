@@ -58,6 +58,7 @@ let selectedPaymentMethod = null;
 let shippingCost = 0;
 let userState = '';
 let userCity = '';
+let userAddress = '';
 
 // ===== INICIALIZAÇÃO PRINCIPAL =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -82,13 +83,14 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadSavedData() {
     console.log("📂 Carregando dados salvos...");
     
-    // Carrega usuário
+    // CORREÇÃO: Chave correta sem espaço extra
     const savedUser = localStorage.getItem('eleganceUser');
     if (savedUser) {
         try {
             user = JSON.parse(savedUser);
             userState = user.state || '';
             userCity = user.city || '';
+            userAddress = user.address || '';
             console.log("👤 Usuário carregado:", user.name);
         } catch (e) {
             console.error("Erro ao carregar usuário:", e);
@@ -172,6 +174,42 @@ function setupRealTimeValidation() {
     if (phoneInput) {
         phoneInput.addEventListener('input', formatPhone);
     }
+
+    // Validação em tempo real para nome e email
+    const nameInput = document.getElementById('name');
+    if (nameInput) {
+        nameInput.addEventListener('input', function() {
+            if (this.value.trim().length < 3) {
+                showInputError('name', 'Nome deve ter pelo menos 3 caracteres');
+            } else {
+                clearInputError('name');
+            }
+        });
+    }
+
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.addEventListener('input', function() {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(this.value.trim())) {
+                showInputError('email', 'E-mail inválido');
+            } else {
+                clearInputError('email');
+            }
+        });
+    }
+
+    const phoneInputRealTime = document.getElementById('phone');
+    if (phoneInputRealTime) {
+        phoneInputRealTime.addEventListener('input', function() {
+            const digits = this.value.replace(/\D/g, '');
+            if (digits.length < 10 || digits.length > 11) {
+                showInputError('phone', 'Telefone deve ter 10 ou 11 dígitos');
+            } else {
+                clearInputError('phone');
+            }
+        });
+    }
 }
 
 function formatCEP(e) {
@@ -196,7 +234,7 @@ function formatPhone(e) {
     e.target.value = value;
 }
 
-// ===== API DE CEP - FUNCIONANDO =====
+// ===== API DE CEP - FUNCIONANDO COM ENDEREÇO ESPECÍFICO =====
 async function validateCEP(cep) {
     const cepClean = cep.replace(/\D/g, '');
     
@@ -237,8 +275,9 @@ async function validateCEP(cep) {
 function fillAddressData(data) {
     userState = data.uf;
     userCity = data.localidade;
+    userAddress = `${data.logradouro || 'Rua'} - ${data.bairro || 'Bairro'} - ${data.localidade} - ${data.uf}`;
     
-    // Atualiza interface
+    // Atualiza interface com endereço específico
     const cepGroup = document.getElementById('cep').closest('.form-group');
     let locationInfo = cepGroup.querySelector('.location-info');
     
@@ -248,12 +287,12 @@ function fillAddressData(data) {
         cepGroup.appendChild(locationInfo);
     }
     
-    locationInfo.innerHTML = `📍 ${data.localidade} - ${data.uf}`;
+    locationInfo.innerHTML = `📍 ${userAddress}`;
     locationInfo.style.cssText = 'color: #27ae60; font-size: 0.9rem; margin-top: 5px; font-weight: 500;';
     
     // CALCULA FRETE AUTOMATICAMENTE
     calculateShipping(data.uf);
-    console.log("🚚 Frete calculado para:", data.uf);
+    console.log("🚚 Frete calculado para:", data.uf, "- Endereço:", userAddress);
 }
 
 function showCEPLoading(show) {
@@ -274,17 +313,20 @@ function showCEPLoading(show) {
     }
 }
 
-// ===== CÁLCULO DE FRETE =====
+// ===== CÁLCULO DE FRETE INTELIGENTE =====
 function calculateShipping(state) {
     const region = getRegionByState(state);
     shippingCost = storeConfig.freightRates[region] || storeConfig.freightRates.sudeste;
     
-    console.log(`💰 Frete calculado: ${state} -> R$ ${shippingCost.toFixed(2)}`);
+    console.log(`💰 Frete calculado: ${state} (${region}) -> R$ ${shippingCost.toFixed(2)}`);
     
     // Atualiza carrinho se tiver itens
     if (cart.length > 0) {
         updateCart();
     }
+    
+    // Mostra notificação de frete calculado
+    showNotification(`🚚 Frete calculado: R$ ${shippingCost.toFixed(2)} (${getRegionName(region)})`);
 }
 
 function getRegionByState(state) {
@@ -301,6 +343,18 @@ function getRegionByState(state) {
     return regions[state] || 'sudeste';
 }
 
+function getRegionName(region) {
+    const names = {
+        'sp': 'SP',
+        'sul': 'Sul',
+        'sudeste': 'Sudeste',
+        'centro': 'Centro-Oeste',
+        'nordeste': 'Nordeste',
+        'norte': 'Norte'
+    };
+    return names[region] || region;
+}
+
 // ===== VALIDAÇÕES =====
 function validateForm() {
     const name = document.getElementById('name').value.trim();
@@ -314,8 +368,6 @@ function validateForm() {
     if (name.length < 3) {
         showInputError('name', 'Nome deve ter pelo menos 3 caracteres');
         isValid = false;
-    } else {
-        clearInputError('name');
     }
     
     // Valida email
@@ -323,24 +375,18 @@ function validateForm() {
     if (!emailRegex.test(email)) {
         showInputError('email', 'E-mail inválido');
         isValid = false;
-    } else {
-        clearInputError('email');
     }
     
     // Valida CEP
     if (cep.length !== 8) {
         showInputError('cep', 'CEP deve ter 8 dígitos');
         isValid = false;
-    } else {
-        clearInputError('cep');
     }
     
     // Valida telefone
     if (phone.length < 10 || phone.length > 11) {
         showInputError('phone', 'Telefone deve ter 10 ou 11 dígitos');
         isValid = false;
-    } else {
-        clearInputError('phone');
     }
     
     return isValid;
@@ -372,7 +418,7 @@ function clearInputError(fieldId) {
 // ===== SISTEMA DE CARRINHO =====
 function addToCart(productId) {
     if (!user) {
-        alert('⚠️ Faça seu cadastro antes de comprar!');
+        alert('⚠️ Faça seu cadastro antes de adicionar itens ao carrinho!');
         openRegisterModal();
         return;
     }
@@ -403,7 +449,8 @@ function updateCart() {
     localStorage.setItem('eleganceCart', JSON.stringify(cart));
     
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.querySelector('.cart-count').textContent = totalItems;
+    const cartCountEl = document.querySelector('.cart-count');
+    if (cartCountEl) cartCountEl.textContent = totalItems;
     
     updateCartModal();
 }
@@ -419,12 +466,12 @@ function updateCartModal() {
     
     if (cart.length === 0) {
         cartItems.innerHTML = '<p style="text-align: center; padding: 40px; color: #777;">Carrinho vazio</p>';
-        cartTotal.textContent = 'R$ 0,00';
-        checkoutBtn.disabled = true;
+        if (cartTotal) cartTotal.textContent = 'R$ 0,00';
+        if (checkoutBtn) checkoutBtn.disabled = true;
         return;
     }
     
-    checkoutBtn.disabled = false;
+    if (checkoutBtn) checkoutBtn.disabled = false;
     
     let subtotal = 0;
     cart.forEach(item => {
@@ -468,7 +515,7 @@ function updateCartModal() {
     `;
     cartItems.appendChild(shippingInfo);
     
-    cartTotal.textContent = `R$ ${total.toFixed(2)}`;
+    if (cartTotal) cartTotal.textContent = `R$ ${total.toFixed(2)}`;
     
     setupCartEventListeners();
 }
@@ -585,12 +632,14 @@ function handleRegistration() {
         cep: formData.get('cep').replace(/\D/g, ''),
         phone: formData.get('phone').replace(/\D/g, ''),
         state: userState,
-        city: userCity
+        city: userCity,
+        address: userAddress
     };
     
+    // CORREÇÃO: Chave correta sem espaço
     localStorage.setItem('eleganceUser', JSON.stringify(user));
     closeRegisterModal();
-    showNotification('✅ Cadastro realizado!');
+    showNotification('✅ Cadastro realizado com sucesso!');
 }
 
 function openRegisterModal() {
@@ -652,8 +701,8 @@ function sendWhatsAppOrder() {
     message += `*Cliente:* ${user.name}%0A`;
     message += `*Email:* ${user.email}%0A`;
     message += `*Telefone:* ${user.phone}%0A`;
-    message += `*CEP:* ${user.cep}%0A`;
-    message += `*Cidade/UF:* ${userCity}/${userState}%0A%0A`;
+    message += `*Endereço:* ${userAddress}%0A`;
+    message += `*CEP:* ${user.cep}%0A%0A`;
     message += `*Itens:*%0A`;
     
     let subtotal = 0;
@@ -677,7 +726,7 @@ function sendWhatsAppOrder() {
     localStorage.removeItem('eleganceCart');
     updateCart();
     document.getElementById('paymentModal').classList.remove('active');
-    showNotification('✅ Pedido enviado!');
+    showNotification('✅ Pedido enviado para WhatsApp!');
 }
 
 function getPaymentMethodName(method) {
