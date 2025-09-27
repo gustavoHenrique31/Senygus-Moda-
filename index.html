@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elegance - Moda Feminina</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="cssmamis.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Modal de Cadastro/Login -->
+    <!-- Modal de Cadastro -->
     <div id="registerModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -65,10 +65,6 @@
                         <span>PIX</span>
                     </div>
                 </div>
-                
-                <div id="paymentGateway" class="payment-gateway">
-                    <!-- Integração com gateway será mostrada aqui -->
-                </div>
             </div>
 
             <button id="confirmPayment" class="btn-primary">Confirmar Pedido via WhatsApp</button>
@@ -80,25 +76,17 @@
         <div class="container header-container">
             <a href="#" class="logo">ELEG<span>ANCE</span></a>
             
-            <button class="hamburger">
-                <i class="fas fa-bars"></i>
-            </button>
-            
             <nav>
                 <ul class="nav-menu">
-                    <li><a href="#">Novidades</a></li>
-                    <li><a href="#">Vestidos</a></li>
-                    <li><a href="#">Blusas</a></li>
-                    <li><a href="#">Calças</a></li>
-                    <li><a href="#">Saias</a></li>
-                    <li><a href="#">Acessórios</a></li>
+                    <li><a href="#vestidos">Vestidos</a></li>
+                    <li><a href="#blusas">Blusas</a></li>
+                    <li><a href="#calcas">Calças</a></li>
+                    <li><a href="#saias">Saias</a></li>
+                    <li><a href="#acessorios">Acessórios</a></li>
                 </ul>
             </nav>
             
             <div class="header-actions">
-                <button class="user-btn" id="userInfo">
-                    <i class="fas fa-user"></i>
-                </button>
                 <button class="cart-btn" id="cartToggle">
                     <i class="fas fa-shopping-bag"></i>
                     <span class="cart-count">0</span>
@@ -110,9 +98,9 @@
     <!-- Hero Banner -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Nova Coleção Verão</h1>
-            <p>Descubra as últimas tendências da temporada</p>
-            <a href="#products" class="btn">Comprar Agora</a>
+            <h1>Nova Coleção Verão 2024</h1>
+            <p>Descubra as últimas tendências da moda feminina</p>
+            <a href="#products" class="btn">Ver Coleção</a>
         </div>
     </section>
 
@@ -136,14 +124,14 @@
             </button>
         </div>
         <div class="cart-items" id="cartItems">
-            <!-- Itens do carrinho serão inseridos via JavaScript -->
+            <p style="text-align: center; padding: 40px; color: #777;">Seu carrinho está vazio.</p>
         </div>
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total:</span>
                 <span id="cartTotal">R$ 0,00</span>
             </div>
-            <button class="checkout-btn" id="checkoutBtn">Finalizar Compra</button>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Finalizar Compra</button>
         </div>
     </div>
 
@@ -155,9 +143,9 @@
                     <h3>Elegance</h3>
                     <p>Moda feminina com elegância e sofisticação.</p>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-pinterest"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
                     </div>
                 </div>
                 <div class="footer-column">
@@ -178,12 +166,11 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; senygus.</p>
+                <p>&copy; 2024 Elegance. Todos os direitos reservados.</p>
             </div>
         </div>
     </footer>
 
-    <script src="scriptmamis.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
-
