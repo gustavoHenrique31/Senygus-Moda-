@@ -1,6 +1,6 @@
 // ===== VARIÁVEIS GLOBAIS =====
 let cart = JSON.parse(localStorage.getItem('eleganceCart')) || [];
-let user = JSON.parse(localStorage.getItem('eleganceUser')) || null;
+let user = JSON.parse(sessionStorage.getItem('eleganceUser')) || null; // Usando sessionStorage
 let selectedPaymentMethod = null;
 let shippingCost = 0;
 let userState = '';
@@ -35,14 +35,70 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== PRODUTOS =====
 function initializeProducts() {
     const products = [
-        { id: 1, name: "Vestido Floral Verão", price: 89.90, category: "vestidos" },
-        { id: 2, name: "Blusa Básica Algodão", price: 39.90, category: "blusas" },
-        { id: 3, name: "Calça Jeans Skinny", price: 119.90, category: "calcas" },
-        { id: 4, name: "Saia Midi Plissada", price: 69.90, category: "saias" },
-        { id: 5, name: "Vestido Midi Elegante", price: 129.90, category: "vestidos" },
-        { id: 6, name: "Blusa Tricot Inverno", price: 79.90, category: "blusas" },
-        { id: 7, name: "Calça Wide Leg", price: 99.90, category: "calcas" },
-        { id: 8, name: "Saia Curta Jeans", price: 59.90, category: "saias" }
+        { 
+            id: 1, 
+            name: "Vestido Floral Verão", 
+            price: 89.90, 
+            category: "vestidos",
+            description: "Vestido leve e fluido com estampa floral, ideal para os dias quentes de verão. Confeccionado em viscose de alta qualidade, proporciona conforto e elegância.",
+            details: ["Tecido: Viscose", "Composição: 100% Viscose", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
+        },
+        { 
+            id: 2, 
+            name: "Blusa Básica Algodão", 
+            price: 39.90, 
+            category: "blusas",
+            description: "Blusa básica em algodão, versátil e confortável. Perfeita para compor looks casuais ou mais elaborados.",
+            details: ["Tecido: Algodão", "Composição: 100% Algodão", "Modelagem: Reta", "Lavagem: Máquina"]
+        },
+        { 
+            id: 3, 
+            name: "Calça Jeans Skinny", 
+            price: 119.90, 
+            category: "calcas",
+            description: "Calça jeans modelo skinny, ajustada ao corpo. Confortável e moderna, ideal para o dia a dia.",
+            details: ["Tecido: Jeans", "Composição: 98% Algodão, 2% Elastano", "Modelo: Skinny", "Lavagem: Máquina"]
+        },
+        { 
+            id: 4, 
+            name: "Saia Midi Plissada", 
+            price: 69.90, 
+            category: "saias",
+            description: "Saia midi com detalhes plissados, elegante e feminina. Perfeita para ocasiões especiais ou para o dia a dia.",
+            details: ["Tecido: Poliéster", "Composição: 100% Poliéster", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
+        },
+        { 
+            id: 5, 
+            name: "Vestido Midi Elegante", 
+            price: 129.90, 
+            category: "vestidos",
+            description: "Vestido midi elegante com corte impecável. Ideal para eventos formais ou jantares especiais.",
+            details: ["Tecido: Cetim", "Composição: 100% Poliéster", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
+        },
+        { 
+            id: 6, 
+            name: "Blusa Tricot Inverno", 
+            price: 79.90, 
+            category: "blusas",
+            description: "Blusa tricot aconchegante, perfeita para os dias mais frios. Confortável e estilosa.",
+            details: ["Tecido: Tricot", "Composição: 70% Algodão, 30% Acrílico", "Modelagem: Amplo", "Lavagem: Lavagem à mão"]
+        },
+        { 
+            id: 7, 
+            name: "Calça Wide Leg", 
+            price: 99.90, 
+            category: "calcas",
+            description: "Calça wide leg com caimento perfeito. Tendência fashion que combina conforto e estilo.",
+            details: ["Tecido: Linho", "Composição: 100% Linho", "Modelo: Wide Leg", "Lavagem: Máquina"]
+        },
+        { 
+            id: 8, 
+            name: "Saia Curta Jeans", 
+            price: 59.90, 
+            category: "saias",
+            description: "Saia curta em jeans, despojada e jovem. Ideal para looks casuais e divertidos.",
+            details: ["Tecido: Jeans", "Composição: 98% Algodão, 2% Elastano", "Comprimento: Curto", "Lavagem: Máquina"]
+        }
     ];
     
     const productsGrid = document.getElementById('productsGrid');
@@ -58,7 +114,10 @@ function initializeProducts() {
             <div class="product-info">
                 <div class="product-name">${product.name}</div>
                 <div class="product-price">R$ ${product.price.toFixed(2)}</div>
-                <button class="add-to-cart" data-id="${product.id}">Adicionar ao Carrinho</button>
+                <div class="product-actions">
+                    <button class="view-details-btn" data-id="${product.id}">Ver Detalhes</button>
+                    <button class="add-to-cart" data-id="${product.id}">Adicionar ao Carrinho</button>
+                </div>
             </div>
         `;
         productsGrid.appendChild(productCard);
@@ -72,6 +131,57 @@ function initializeProducts() {
             addToCart(product);
         });
     });
+    
+    // Adiciona eventos aos botões de detalhes
+    document.querySelectorAll('.view-details-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = parseInt(this.getAttribute('data-id'));
+            const product = products.find(p => p.id === productId);
+            showProductDetails(product);
+        });
+    });
+}
+
+// ===== MODAL DE DETALHES DO PRODUTO =====
+function showProductDetails(product) {
+    const productModal = document.getElementById('productModal');
+    const productDetails = document.getElementById('productDetails');
+    
+    productDetails.innerHTML = `
+        <div class="product-detail-image">
+            <i class="fas fa-tshirt"></i>
+        </div>
+        <div class="product-detail-info">
+            <h2>${product.name}</h2>
+            <div class="product-detail-price">R$ ${product.price.toFixed(2)}</div>
+            <div class="product-detail-description">
+                <h3>Descrição</h3>
+                <p>${product.description}</p>
+            </div>
+            <div class="product-detail-specs">
+                <h3>Detalhes do Produto</h3>
+                <ul>
+                    ${product.details.map(detail => `<li>${detail}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="product-detail-actions">
+                <button class="add-to-cart-from-detail" data-id="${product.id}">Adicionar ao Carrinho</button>
+            </div>
+        </div>
+    `;
+    
+    // Adiciona evento ao botão de adicionar ao carrinho no modal
+    const addButton = productDetails.querySelector('.add-to-cart-from-detail');
+    addButton.addEventListener('click', function() {
+        addToCart(product);
+        closeProductModal();
+    });
+    
+    productModal.classList.add('active');
+}
+
+function closeProductModal() {
+    document.getElementById('productModal').classList.remove('active');
 }
 
 // ===== CARRINHO =====
@@ -261,10 +371,16 @@ function setupEventListeners() {
     
     document.getElementById('confirmPayment').addEventListener('click', sendWhatsAppOrder);
     
+    // Modal de produto
+    document.querySelector('#productModal .close-modal').addEventListener('click', closeProductModal);
+    
     // Carrinho
     document.getElementById('cartToggle').addEventListener('click', toggleCart);
     document.getElementById('closeCart').addEventListener('click', toggleCart);
-    document.getElementById('overlay').addEventListener('click', toggleCart);
+    document.getElementById('overlay').addEventListener('click', function() {
+        toggleCart();
+        closeProductModal();
+    });
     document.getElementById('checkoutBtn').addEventListener('click', openPaymentModal);
     
     // Fecha modais com ESC
@@ -272,6 +388,7 @@ function setupEventListeners() {
         if (e.key === 'Escape') {
             closeRegisterModal();
             closePaymentModal();
+            closeProductModal();
             toggleCart();
         }
     });
@@ -585,73 +702,6 @@ function handleRegistration() {
     // Já calcula frete pelo estado
     calculateShipping(user.state);
     
-    localStorage.setItem('eleganceUser', JSON.stringify(user));
-    closeRegisterModal();
-    showNotification('✅ Cadastro realizado com sucesso!');
-    console.log("👤 Usuário cadastrado:", user.name, "- Endereço:", user.address);
-}
-
-// ===== WHATSAPP ATUALIZADO COM ENDEREÇO COMPLETO =====
-function sendWhatsAppOrder() {
-    if (!user || cart.length === 0 || !selectedPaymentMethod) {
-        alert('Complete todas as informações!');
-        return;
-    }
-    
-    const phone = '5511999999999'; // ALTERE PARA SEU NÚMERO
-    
-    let message = `*PEDIDO - ELEGANCE*%0A%0A`;
-    message += `*Cliente:* ${user.name}%0A`;
-    message += `*Email:* ${user.email}%0A`;
-    message += `*Telefone:* ${user.phone}%0A`;
-    message += `*Endereço de Entrega:*%0A`;
-    message += `${user.address}%0A`;
-    message += `${user.city} - ${user.state}%0A`;
-    message += `CEP: ${user.cep}%0A%0A`;
-    message += `*Itens do Pedido:*%0A`;
-    
-    let subtotal = 0;
-    cart.forEach(item => {
-        const total = item.price * item.quantity;
-        subtotal += total;
-        message += `• ${item.name} - R$ ${item.price.toFixed(2)} x${item.quantity} = R$ ${total.toFixed(2)}%0A`;
-    });
-    
-    const total = subtotal + shippingCost;
-    message += `%0A*Subtotal:* R$ ${subtotal.toFixed(2)}%0A`;
-    message += `*Frete:* R$ ${shippingCost.toFixed(2)}%0A`;
-    message += `*Total:* R$ ${total.toFixed(2)}%0A`;
-    message += `*Pagamento:* ${getPaymentMethodName(selectedPaymentMethod)}%0A`;
-    message += `*Data:* ${new Date().toLocaleDateString('pt-BR')}`;
-    
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-    
-    // Limpa carrinho após pedido
-    cart = [];
-    localStorage.removeItem('eleganceCart');
-    updateCart();
-    document.getElementById('paymentModal').classList.remove('active');
-    showNotification('✅ Pedido enviado para WhatsApp!');
-}
-
-function getPaymentMethodName(method) {
-    const methods = {
-        'credit': 'Cartão de Crédito',
-        'debit': 'Cartão de Débito',
-        'pix': 'PIX'
-    };
-    return methods[method] || 'Método não especificado';
-}
-
-// ===== NOTIFICAÇÕES =====
-function showNotification(message) {
-    const notification = document.getElementById('notification');
-    if (notification) {
-        notification.textContent = message;
-        notification.classList.add('active');
-        
-        setTimeout(() => {
-            notification.classList.remove('active');
-        }, 3000);
-    }
-}
+    // Usando sessionStorage para limpar após fechar o navegador
+    sessionStorage.setItem('eleganceUser', JSON.stringify(user));
+    closeRegister
