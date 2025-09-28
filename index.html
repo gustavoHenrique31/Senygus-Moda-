@@ -689,76 +689,6 @@
             to { transform: translateX(100%); opacity: 0; }
         }
 
-        /* ===== SEÇÃO DE FRETE ===== */
-        .shipping-section {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .shipping-section h3 {
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            color: #333;
-        }
-
-        .shipping-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .shipping-option {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .shipping-option:hover {
-            border-color: #007bff;
-        }
-
-        .shipping-option.selected {
-            border-color: #28a745;
-            background-color: #f8fff9;
-        }
-
-        .shipping-company {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .shipping-details {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-
-        .shipping-price {
-            font-weight: 700;
-            color: #28a745;
-            font-size: 1.1rem;
-        }
-
-        .shipping-deadline {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .shipping-loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            display: none;
-        }
-
         /* ===== FOOTER ===== */
         footer {
             background-color: var(--primary-color);
@@ -1106,20 +1036,13 @@
             setupRealTimeValidation();
         });
 
-        // ===== PRODUTOS =====
+        // ===== PRODUTOS - CORREÇÃO DOS EVENT LISTENERS =====
         function initializeProducts() {
             const productsGrid = document.getElementById('productsGrid');
-            if (!productsGrid) {
-                console.error("❌ Elemento productsGrid não encontrado!");
-                return;
-            }
-            
-            productsGrid.innerHTML = '';
-            
-            products.forEach(product => {
-                const productCard = document.createElement('div');
-                productCard.className = 'product-card';
-                productCard.innerHTML = `
+            if (!productsGrid) return;
+
+            productsGrid.innerHTML = products.map(product => `
+                <div class="product-card">
                     <div class="product-image">
                         <i class="fas fa-tshirt"></i>
                     </div>
@@ -1127,56 +1050,19 @@
                         <div class="product-name">${product.name}</div>
                         <div class="product-price">R$ ${product.price.toFixed(2)}</div>
                         <div class="product-actions">
-                            <button class="view-details-btn" data-id="${product.id}">Ver Detalhes</button>
-                            <button class="add-to-cart" data-id="${product.id}">Adicionar ao Carrinho</button>
+                            <button class="view-details-btn" onclick="showProductDetails(${product.id})">Ver Detalhes</button>
+                            <button class="add-to-cart" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
                         </div>
                     </div>
-                `;
-                productsGrid.appendChild(productCard);
-            });
-            
-            // Adiciona eventos aos botões - CORRIGIDO
-            setTimeout(() => {
-                // Botões "Adicionar ao Carrinho"
-                document.querySelectorAll('.add-to-cart').forEach(button => {
-                    button.addEventListener('click', function(e) {
-                        e.stopPropagation(); // Impede que o clique no produto seja acionado
-                        const productId = parseInt(this.getAttribute('data-id'));
-                        const product = products.find(p => p.id === productId);
-                        if (product) {
-                            addToCart(product);
-                        }
-                    });
-                });
-                
-                // Botões "Ver Detalhes"
-                document.querySelectorAll('.view-details-btn').forEach(button => {
-                    button.addEventListener('click', function(e) {
-                        e.stopPropagation(); // Impede que o clique no produto seja acionado
-                        const productId = parseInt(this.getAttribute('data-id'));
-                        const product = products.find(p => p.id === productId);
-                        if (product) {
-                            showProductDetails(product);
-                        }
-                    });
-                });
-                
-                // Clique no card do produto (abre detalhes)
-                document.querySelectorAll('.product-card').forEach(card => {
-                    card.addEventListener('click', function() {
-                        const productId = parseInt(this.querySelector('.view-details-btn').getAttribute('data-id'));
-                        const product = products.find(p => p.id === productId);
-                        if (product) {
-                            showProductDetails(product);
-                        }
-                    });
-                });
-                
-            }, 100);
+                </div>
+            `).join('');
         }
 
-        // ===== CARRINHO CORRIGIDO =====
-        function addToCart(product) {
+        // ===== CARRINHO SIMPLIFICADO =====
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
             const existingItem = cart.find(item => item.id === product.id);
             
             if (existingItem) {
@@ -1200,34 +1086,21 @@
             const cartItems = document.getElementById('cartItems');
             const cartTotal = document.getElementById('cartTotal');
             const checkoutBtn = document.getElementById('checkoutBtn');
-            
-            if (!cartItems || !cartTotal) {
-                console.error("❌ Elementos do carrinho não encontrados!");
-                return;
-            }
-            
+
+            if (!cartItems || !cartTotal) return;
+
             // Atualiza contador
             const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            if (cartCount) {
-                cartCount.textContent = totalItems;
-            }
-            
+            if (cartCount) cartCount.textContent = totalItems;
+
             // Atualiza lista de itens
             if (cart.length === 0) {
                 cartItems.innerHTML = '<p style="text-align: center; padding: 40px; color: #777;">Seu carrinho está vazio.</p>';
                 if (checkoutBtn) checkoutBtn.disabled = true;
                 cartTotal.textContent = 'R$ 0,00';
             } else {
-                cartItems.innerHTML = '';
-                let total = 0;
-                
-                cart.forEach(item => {
-                    const itemTotal = item.price * item.quantity;
-                    total += itemTotal;
-                    
-                    const cartItem = document.createElement('div');
-                    cartItem.className = 'cart-item';
-                    cartItem.innerHTML = `
+                cartItems.innerHTML = cart.map(item => `
+                    <div class="cart-item">
                         <div class="cart-item-image">
                             <i class="fas fa-tshirt"></i>
                         </div>
@@ -1235,32 +1108,15 @@
                             <div class="cart-item-name">${item.name}</div>
                             <div class="cart-item-price">R$ ${item.price.toFixed(2)}</div>
                             <div class="cart-item-quantity">
-                                <button class="quantity-btn minus" data-id="${item.id}">-</button>
+                                <button class="quantity-btn minus" onclick="updateQuantity(${item.id}, -1)">-</button>
                                 <span class="quantity-value">${item.quantity}</span>
-                                <button class="quantity-btn plus" data-id="${item.id}">+</button>
+                                <button class="quantity-btn plus" onclick="updateQuantity(${item.id}, 1)">+</button>
                             </div>
                         </div>
-                    `;
-                    cartItems.appendChild(cartItem);
-                });
-                
-                // Adiciona eventos aos botões de quantidade - CORRIGIDO
-                setTimeout(() => {
-                    document.querySelectorAll('.quantity-btn.minus').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const id = parseInt(this.getAttribute('data-id'));
-                            updateQuantity(id, -1);
-                        });
-                    });
-                    
-                    document.querySelectorAll('.quantity-btn.plus').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const id = parseInt(this.getAttribute('data-id'));
-                            updateQuantity(id, 1);
-                        });
-                    });
-                }, 100);
-                
+                    </div>
+                `).join('');
+
+                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 if (checkoutBtn) checkoutBtn.disabled = false;
                 cartTotal.textContent = `R$ ${total.toFixed(2)}`;
             }
@@ -1268,28 +1124,25 @@
 
         function updateQuantity(productId, change) {
             const item = cart.find(item => item.id === productId);
+            if (!item) return;
+
+            item.quantity += change;
             
-            if (item) {
-                item.quantity += change;
-                
-                if (item.quantity <= 0) {
-                    cart = cart.filter(item => item.id !== productId);
-                }
-                
-                localStorage.setItem('senygusCart', JSON.stringify(cart));
-                updateCart();
+            if (item.quantity <= 0) {
+                cart = cart.filter(item => item.id !== productId);
             }
+            
+            localStorage.setItem('senygusCart', JSON.stringify(cart));
+            updateCart();
         }
 
-        // ===== MODAL DE DETALHES DO PRODUTO CORRIGIDO =====
-        function showProductDetails(product) {
+        // ===== DETALHES DO PRODUTO CORRIGIDO =====
+        function showProductDetails(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
             const productModal = document.getElementById('productModal');
             const productDetails = document.getElementById('productDetails');
-            
-            if (!productModal || !productDetails) {
-                console.error("❌ Modal de detalhes não encontrado!");
-                return;
-            }
             
             productDetails.innerHTML = `
                 <div class="product-detail-image">
@@ -1309,84 +1162,48 @@
                         </ul>
                     </div>
                     <div class="product-detail-actions">
-                        <button class="add-to-cart-from-detail" data-id="${product.id}">Adicionar ao Carrinho</button>
+                        <button class="add-to-cart-from-detail" onclick="addToCartFromDetail(${product.id})">Adicionar ao Carrinho</button>
                     </div>
                 </div>
             `;
             
-            // Adiciona evento ao botão de adicionar ao carrinho no modal
-            setTimeout(() => {
-                const addButton = productDetails.querySelector('.add-to-cart-from-detail');
-                if (addButton) {
-                    addButton.addEventListener('click', function() {
-                        addToCart(product);
-                        closeProductModal();
-                    });
-                }
-            }, 100);
-            
             productModal.classList.add('active');
         }
 
+        function addToCartFromDetail(productId) {
+            addToCart(productId);
+            closeProductModal();
+        }
+
         function closeProductModal() {
-            const productModal = document.getElementById('productModal');
-            if (productModal) {
-                productModal.classList.remove('active');
-            }
+            document.getElementById('productModal').classList.remove('active');
         }
 
-        // ===== NOTIFICAÇÕES CORRIGIDAS =====
-        function showNotification(message) {
-            // Remove notificação anterior se existir
-            const existingNotification = document.querySelector('.notification');
-            if (existingNotification) {
-                existingNotification.remove();
-            }
-            
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.textContent = message;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #27ae60;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 5px;
-                z-index: 10000;
-                animation: slideIn 0.3s ease;
-                font-weight: 500;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Remove após 3 segundos
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.remove();
-                    }
-                }, 300);
-            }, 3000);
-        }
-
-        // ===== FUNÇÃO TOGGLE CART CORRIGIDA =====
+        // ===== CARRINHO FUNÇÕES =====
         function toggleCart() {
             const cartModal = document.getElementById('cartModal');
             const overlay = document.getElementById('overlay');
             
-            if (cartModal && overlay) {
-                if (cartModal.classList.contains('active')) {
-                    cartModal.classList.remove('active');
-                    overlay.classList.remove('active');
-                } else {
-                    cartModal.classList.add('active');
-                    overlay.classList.add('active');
-                }
+            if (cartModal.classList.contains('active')) {
+                cartModal.classList.remove('active');
+                overlay.classList.remove('active');
+            } else {
+                cartModal.classList.add('active');
+                overlay.classList.add('active');
             }
+        }
+
+        // ===== NOTIFICAÇÕES =====
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
 
         // ===== RESTANTE DAS FUNÇÕES =====
@@ -1404,7 +1221,6 @@
                 return;
             }
             
-            // Abre o modal de cadastro primeiro
             openRegisterModal();
         }
 
@@ -1444,13 +1260,10 @@
             
             closeRegisterModal();
             showNotification('✅ Cadastro realizado! Agora finalize seu pedido.');
-            
-            // Abre o modal de pagamento
             openFinalPaymentModal();
         }
 
         function openFinalPaymentModal() {
-            // Atualiza resumo do pedido
             const orderItems = document.getElementById('orderItems');
             const orderTotal = document.getElementById('orderTotal');
             
@@ -1467,9 +1280,7 @@
                 `;
             });
             
-            // Adiciona frete ao total
             total += shippingCost;
-            
             orderItems.innerHTML = itemsHTML;
             orderTotal.textContent = `R$ ${total.toFixed(2)}`;
             
@@ -1488,7 +1299,6 @@
                 return;
             }
             
-            // Calcula totais
             let subtotal = 0;
             let itemsText = '';
             
@@ -1500,7 +1310,6 @@
             
             const total = subtotal + shippingCost;
             
-            // Formata mensagem
             const message = `🛍️ *PEDIDO - SENYGUS MODA*
 
 👤 *Cliente:* ${user.name}
@@ -1518,14 +1327,11 @@ ${itemsText}
 
 *Pedido realizado em:* ${new Date().toLocaleString('pt-BR')}`;
 
-            // Codifica mensagem para URL
             const encodedMessage = encodeURIComponent(message);
             const whatsappURL = `https://wa.me/5511996912230?text=${encodedMessage}`;
             
-            // Abre WhatsApp
             window.open(whatsappURL, '_blank');
             
-            // Limpa carrinho e fecha modais
             cart = [];
             localStorage.setItem('senygusCart', JSON.stringify(cart));
             user = null;
@@ -1548,14 +1354,12 @@ ${itemsText}
         // ===== VALIDAÇÃO DE CEP =====
         function setupRealTimeValidation() {
             const cepInput = document.getElementById('cep');
-            if (cepInput) {
-                cepInput.addEventListener('input', formatCEP);
-                cepInput.addEventListener('blur', function() {
-                    if (this.value.length === 9) {
-                        validateCEP(this.value);
-                    }
-                });
-            }
+            cepInput.addEventListener('input', formatCEP);
+            cepInput.addEventListener('blur', function() {
+                if (this.value.length === 9) {
+                    validateCEP(this.value);
+                }
+            });
         }
 
         function formatCEP(e) {
@@ -1583,8 +1387,6 @@ ${itemsText}
                     document.getElementById('bairro').value = data.bairro || '';
                     document.getElementById('cidade').value = data.localidade || '';
                     document.getElementById('estado').value = data.uf || '';
-                    
-                    // Calcula frete baseado no estado
                     calculateShipping(data.uf);
                 }
             } catch (error) {
@@ -1594,40 +1396,23 @@ ${itemsText}
 
         function calculateShipping(state) {
             const shippingRates = {
-                'SP': 15.00,
-                'RJ': 18.00,
-                'MG': 20.00,
-                'RS': 25.00,
-                'PR': 22.00,
-                'SC': 24.00,
-                'default': 30.00
+                'SP': 15.00, 'RJ': 18.00, 'MG': 20.00, 'RS': 25.00, 
+                'PR': 22.00, 'SC': 24.00, 'default': 30.00
             };
-            
             shippingCost = shippingRates[state] || shippingRates.default;
         }
 
-        // ===== EVENT LISTENERS CORRIGIDOS =====
+        // ===== EVENT LISTENERS SIMPLIFICADOS =====
         function setupEventListeners() {
             // Modal de cadastro
-            const registerClose = document.querySelector('#registerModal .close-modal');
-            if (registerClose) {
-                registerClose.addEventListener('click', closeRegisterModal);
-            }
-            
-            const registerForm = document.getElementById('registerForm');
-            if (registerForm) {
-                registerForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    handleRegistration();
-                });
-            }
+            document.querySelector('#registerModal .close-modal').addEventListener('click', closeRegisterModal);
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleRegistration();
+            });
             
             // Modal de pagamento
-            const paymentClose = document.querySelector('#paymentModal .close-modal');
-            if (paymentClose) {
-                paymentClose.addEventListener('click', closePaymentModal);
-            }
-            
+            document.querySelector('#paymentModal .close-modal').addEventListener('click', closePaymentModal);
             document.querySelectorAll('.payment-option').forEach(option => {
                 option.addEventListener('click', function() {
                     selectedPaymentMethod = this.getAttribute('data-method');
@@ -1638,44 +1423,27 @@ ${itemsText}
                 });
             });
             
-            const confirmPayment = document.getElementById('confirmPayment');
-            if (confirmPayment) {
-                confirmPayment.addEventListener('click', sendWhatsAppOrder);
-            }
+            document.getElementById('confirmPayment').addEventListener('click', sendWhatsAppOrder);
             
             // Modal de produto
-            const productClose = document.querySelector('#productModal .close-modal');
-            if (productClose) {
-                productClose.addEventListener('click', closeProductModal);
-            }
+            document.querySelector('#productModal .close-modal').addEventListener('click', closeProductModal);
             
             // Carrinho - CORRIGIDO
-            const cartToggle = document.getElementById('cartToggle');
-            if (cartToggle) {
-                cartToggle.addEventListener('click', toggleCart);
-            }
+            document.getElementById('cartToggle').addEventListener('click', toggleCart);
+            document.getElementById('closeCart').addEventListener('click', toggleCart);
             
-            const closeCart = document.getElementById('closeCart');
-            if (closeCart) {
-                closeCart.addEventListener('click', toggleCart);
-            }
+            // Overlay fecha tudo
+            document.getElementById('overlay').addEventListener('click', function() {
+                toggleCart();
+                closeProductModal();
+                closeRegisterModal();
+                closePaymentModal();
+            });
             
-            const overlay = document.getElementById('overlay');
-            if (overlay) {
-                overlay.addEventListener('click', function() {
-                    toggleCart();
-                    closeProductModal();
-                    closeRegisterModal();
-                    closePaymentModal();
-                });
-            }
+            // Checkout
+            document.getElementById('checkoutBtn').addEventListener('click', openPaymentModal);
             
-            const checkoutBtn = document.getElementById('checkoutBtn');
-            if (checkoutBtn) {
-                checkoutBtn.addEventListener('click', openPaymentModal);
-            }
-            
-            // Fecha modais com ESC
+            // Tecla ESC
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeRegisterModal();
