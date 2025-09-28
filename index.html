@@ -431,6 +431,71 @@
             transform: none;
         }
 
+        /* ===== ESTIMATIVA DE FRETE ===== */
+        .shipping-estimate {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .shipping-estimate h4 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .shipping-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .shipping-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .shipping-input button {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .shipping-input button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .shipping-results {
+            margin-top: 15px;
+        }
+
+        .shipping-option {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .shipping-option:last-child {
+            border-bottom: none;
+        }
+
+        .shipping-disclaimer {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-light);
+            text-align: center;
+        }
+
         /* ===== MODAIS ===== */
         .modal {
             display: none;
@@ -788,6 +853,10 @@
                 margin: 20px;
                 padding: 20px;
             }
+
+            .shipping-input {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -944,6 +1013,22 @@
                 <span>Total:</span>
                 <span id="cartTotal">R$ 0,00</span>
             </div>
+            
+            <!-- Seção de Estimativa de Frete -->
+            <div class="shipping-estimate">
+                <h4>Calcular Frete</h4>
+                <div class="shipping-input">
+                    <input type="text" id="shippingCep" placeholder="Digite seu CEP" maxlength="9">
+                    <button id="calculateShipping">Calcular</button>
+                </div>
+                <div class="shipping-results" id="shippingResults">
+                    <!-- Resultados do frete serão exibidos aqui -->
+                </div>
+                <div class="shipping-disclaimer">
+                    * Valores são estimativas baseadas nos Correios. O valor final pode variar.
+                </div>
+            </div>
+            
             <button class="checkout-btn" id="checkoutBtn" disabled>Finalizar Compra</button>
         </div>
     </div>
@@ -991,13 +1076,14 @@
         let selectedPaymentMethod = null;
         let shippingCost = 0;
 
-        // ===== LISTA DE PRODUTOS =====
+        // ===== LISTA DE PRODUTOS COM PESOS FICTÍCIOS =====
         const products = [
             { 
                 id: 1, 
                 name: "Vestido Floral Verão", 
                 price: 89.90, 
                 category: "vestidos",
+                weight: 0.3, // Peso em kg
                 description: "Vestido leve e fluido com estampa floral, ideal para os dias quentes de verão. Confeccionado em viscose de alta qualidade, proporciona conforto e elegância.",
                 details: ["Tecido: Viscose", "Composição: 100% Viscose", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
             },
@@ -1006,6 +1092,7 @@
                 name: "Blusa Básica Algodão", 
                 price: 39.90, 
                 category: "blusas",
+                weight: 0.2, // Peso em kg
                 description: "Blusa básica em algodão, versátil e confortável. Perfeita para compor looks casuais ou mais elaborados.",
                 details: ["Tecido: Algodão", "Composição: 100% Algodão", "Modelagem: Reta", "Lavagem: Máquina"]
             },
@@ -1014,6 +1101,7 @@
                 name: "Calça Jeans Skinny", 
                 price: 119.90, 
                 category: "calcas",
+                weight: 0.5, // Peso em kg
                 description: "Calça jeans modelo skinny, ajustada ao corpo. Confortável e moderna, ideal para o dia a dia.",
                 details: ["Tecido: Jeans", "Composição: 98% Algodão, 2% Elastano", "Modelo: Skinny", "Lavagem: Máquina"]
             },
@@ -1022,6 +1110,7 @@
                 name: "Saia Midi Plissada", 
                 price: 69.90, 
                 category: "saias",
+                weight: 0.25, // Peso em kg
                 description: "Saia midi com detalhes plissados, elegante e feminina. Perfeita para ocasiões especiais ou para o dia a dia.",
                 details: ["Tecido: Poliéster", "Composição: 100% Poliéster", "Comprimento: Midi", "Lavagem: Lavagem à mão"]
             }
@@ -1034,6 +1123,7 @@
             updateCart();
             setupEventListeners();
             setupRealTimeValidation();
+            setupShippingCalculation();
         });
 
         // ===== PRODUTOS - CORREÇÃO DOS EVENT LISTENERS =====
@@ -1072,6 +1162,7 @@
                     id: product.id,
                     name: product.name,
                     price: product.price,
+                    weight: product.weight,
                     quantity: 1
                 });
             }
@@ -1159,6 +1250,7 @@
                         <h3>Detalhes do Produto</h3>
                         <ul>
                             ${product.details.map(detail => `<li>${detail}</li>`).join('')}
+                            <li>Peso aproximado: ${product.weight} kg</li>
                         </ul>
                     </div>
                     <div class="product-detail-actions">
@@ -1204,6 +1296,173 @@
             setTimeout(() => {
                 notification.remove();
             }, 3000);
+        }
+
+        // ===== CÁLCULO DE FRETE =====
+        function setupShippingCalculation() {
+            const calculateBtn = document.getElementById('calculateShipping');
+            const shippingCepInput = document.getElementById('shippingCep');
+            
+            calculateBtn.addEventListener('click', calculateShipping);
+            shippingCepInput.addEventListener('input', formatShippingCEP);
+            shippingCepInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    calculateShipping();
+                }
+            });
+        }
+
+        function formatShippingCEP(e) {
+            let cep = e.target.value.replace(/\D/g, '');
+            cep = cep.substring(0, 8);
+            
+            if (cep.length > 5) {
+                cep = cep.substring(0, 5) + '-' + cep.substring(5);
+            }
+            
+            e.target.value = cep;
+        }
+
+        function calculateShipping() {
+            const cepInput = document.getElementById('shippingCep');
+            const cep = cepInput.value.replace(/\D/g, '');
+            
+            if (cep.length !== 8) {
+                showNotification('❌ Digite um CEP válido (8 dígitos)');
+                return;
+            }
+            
+            if (cart.length === 0) {
+                showNotification('❌ Adicione produtos ao carrinho primeiro');
+                return;
+            }
+            
+            // Simula uma consulta aos Correios
+            simulateCorreiosQuery(cep);
+        }
+
+        function simulateCorreiosQuery(cep) {
+            // Peso total do carrinho
+            const totalWeight = cart.reduce((sum, item) => sum + (item.weight * item.quantity), 0);
+            
+            // Simula um tempo de resposta
+            showNotification('🔍 Calculando frete...');
+            
+            setTimeout(() => {
+                // Simula diferentes valores de frete baseados na região e peso
+                const region = getRegionByCEP(cep);
+                const shippingOptions = calculateShippingOptions(totalWeight, region);
+                
+                displayShippingResults(shippingOptions);
+            }, 1500);
+        }
+
+        function getRegionByCEP(cep) {
+            // Simula a identificação da região baseada no CEP
+            // Na prática, isso seria feito com uma API dos Correios
+            const firstDigit = parseInt(cep.charAt(0));
+            
+            if (firstDigit === 0 || firstDigit === 1) return 'capital_sp';
+            if (firstDigit === 2) return 'rio_de_janeiro';
+            if (firstDigit === 3) return 'minas_gerais';
+            if (firstDigit >= 4 && firstDigit <= 6) return 'sul';
+            if (firstDigit === 7) return 'centro_oeste';
+            if (firstDigit === 8) return 'norte';
+            return 'default';
+        }
+
+        function calculateShippingOptions(weight, region) {
+            // Valores fictícios baseados nas modalidades dos Correios
+            // Estes valores são apenas para demonstração
+            const baseRates = {
+                'capital_sp': { pac: 15.00, sedex: 25.00, sedex10: 35.00 },
+                'rio_de_janeiro': { pac: 18.00, sedex: 28.00, sedex10: 38.00 },
+                'minas_gerais': { pac: 20.00, sedex: 30.00, sedex10: 40.00 },
+                'sul': { pac: 22.00, sedex: 32.00, sedex10: 42.00 },
+                'centro_oeste': { pac: 25.00, sedex: 35.00, sedex10: 45.00 },
+                'norte': { pac: 28.00, sedex: 38.00, sedex10: 48.00 },
+                'default': { pac: 30.00, sedex: 40.00, sedex10: 50.00 }
+            };
+            
+            const rates = baseRates[region] || baseRates.default;
+            
+            // Ajusta pelo peso (valor fictício)
+            const weightAdjustment = Math.max(1, weight / 0.5); // A cada 0.5kg aumenta o frete
+            
+            return {
+                pac: {
+                    name: 'PAC',
+                    description: 'Entrega em até 10 dias úteis',
+                    price: (rates.pac * weightAdjustment).toFixed(2),
+                    delivery: '10 dias úteis'
+                },
+                sedex: {
+                    name: 'SEDEX',
+                    description: 'Entrega em até 5 dias úteis',
+                    price: (rates.sedex * weightAdjustment).toFixed(2),
+                    delivery: '5 dias úteis'
+                },
+                sedex10: {
+                    name: 'SEDEX 10',
+                    description: 'Entrega em até 1 dia útil',
+                    price: (rates.sedex10 * weightAdjustment).toFixed(2),
+                    delivery: '1 dia útil'
+                }
+            };
+        }
+
+        function displayShippingResults(options) {
+            const resultsContainer = document.getElementById('shippingResults');
+            
+            resultsContainer.innerHTML = `
+                <div class="shipping-option">
+                    <span><strong>${options.pac.name}</strong> - ${options.pac.description}</span>
+                    <span>R$ ${options.pac.price}</span>
+                </div>
+                <div class="shipping-option">
+                    <span><strong>${options.sedex.name}</strong> - ${options.sedex.description}</span>
+                    <span>R$ ${options.sedex.price}</span>
+                </div>
+                <div class="shipping-option">
+                    <span><strong>${options.sedex10.name}</strong> - ${options.sedex10.description}</span>
+                    <span>R$ ${options.sedex10.price}</span>
+                </div>
+            `;
+            
+            // Permite selecionar uma opção de frete
+            const shippingOptions = resultsContainer.querySelectorAll('.shipping-option');
+            shippingOptions.forEach((option, index) => {
+                option.style.cursor = 'pointer';
+                option.addEventListener('click', function() {
+                    // Remove seleção anterior
+                    shippingOptions.forEach(opt => {
+                        opt.style.backgroundColor = '';
+                        opt.style.borderRadius = '0';
+                    });
+                    
+                    // Seleciona a opção atual
+                    this.style.backgroundColor = '#f0f0f0';
+                    this.style.borderRadius = '5px';
+                    
+                    // Define o custo de frete selecionado
+                    const methods = ['pac', 'sedex', 'sedex10'];
+                    shippingCost = parseFloat(options[methods[index]].price);
+                    
+                    // Atualiza o total no carrinho
+                    updateCartTotalWithShipping();
+                    
+                    showNotification(`✅ Frete ${options[methods[index]].name} selecionado`);
+                });
+            });
+        }
+
+        function updateCartTotalWithShipping() {
+            const cartTotalElement = document.getElementById('cartTotal');
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal + shippingCost;
+            
+            cartTotalElement.textContent = `R$ ${total.toFixed(2)}`;
         }
 
         // ===== RESTANTE DAS FUNÇÕES =====
@@ -1268,11 +1527,11 @@
             const orderTotal = document.getElementById('orderTotal');
             
             let itemsHTML = '';
-            let total = 0;
+            let subtotal = 0;
             
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
-                total += itemTotal;
+                subtotal += itemTotal;
                 itemsHTML += `
                     <div class="order-item">
                         ${item.name} - R$ ${item.price.toFixed(2)} x${item.quantity} = R$ ${itemTotal.toFixed(2)}
@@ -1280,7 +1539,17 @@
                 `;
             });
             
-            total += shippingCost;
+            // Adiciona o frete ao total
+            const total = subtotal + shippingCost;
+            
+            // Adiciona linha do frete ao resumo
+            itemsHTML += `
+                <div class="order-item">
+                    <span>Frete</span>
+                    <span>R$ ${shippingCost.toFixed(2)}</span>
+                </div>
+            `;
+            
             orderItems.innerHTML = itemsHTML;
             orderTotal.textContent = `R$ ${total.toFixed(2)}`;
             
@@ -1321,8 +1590,8 @@
 📦 *ITENS DO PEDIDO:*
 ${itemsText}
 
-💳 *FORMA DE PAGAMENTO:* ${getPaymentMethodText(selectedPaymentMethod)}
 🚚 *FRETE:* R$ ${shippingCost.toFixed(2)}
+💳 *FORMA DE PAGAMENTO:* ${getPaymentMethodText(selectedPaymentMethod)}
 💰 *TOTAL:* R$ ${total.toFixed(2)}
 
 *Pedido realizado em:* ${new Date().toLocaleString('pt-BR')}`;
@@ -1335,6 +1604,7 @@ ${itemsText}
             cart = [];
             localStorage.setItem('senygusCart', JSON.stringify(cart));
             user = null;
+            shippingCost = 0;
             
             closePaymentModal();
             updateCart();
@@ -1387,19 +1657,10 @@ ${itemsText}
                     document.getElementById('bairro').value = data.bairro || '';
                     document.getElementById('cidade').value = data.localidade || '';
                     document.getElementById('estado').value = data.uf || '';
-                    calculateShipping(data.uf);
                 }
             } catch (error) {
                 console.error("Erro ao consultar CEP:", error);
             }
-        }
-
-        function calculateShipping(state) {
-            const shippingRates = {
-                'SP': 15.00, 'RJ': 18.00, 'MG': 20.00, 'RS': 25.00, 
-                'PR': 22.00, 'SC': 24.00, 'default': 30.00
-            };
-            shippingCost = shippingRates[state] || shippingRates.default;
         }
 
         // ===== EVENT LISTENERS SIMPLIFICADOS =====
